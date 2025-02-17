@@ -69,9 +69,11 @@ for (i in 1:4){
       # delete max value from myvec
       myvec <- myvec[! myvec %in% max(myvec)]
 
-      # add NA to myvec
-      # myvec <- c(myvec, NA)
 
+      # change -Inf back to NA
+      if(mymat[i,k] == -Inf){
+        mymat[i,k] <- NA
+      }
     }
   }
 }
@@ -80,5 +82,18 @@ for (i in 1:4){
 
 ## Interpolation
 
+vec <- rep(NA,100)
+vec[1:25] <- 6
+vec[66:100] <- -20
 
+# extract gradient
+rate <- (6- -20) / length(26:65)
+
+# assign gradient
+for (i in 26:65){
+  vec[i] = vec[i-1] - rate
+}
+
+# plot vec
+plot(vec)
 
