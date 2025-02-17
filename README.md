@@ -1,5 +1,6 @@
 # Applied Geodata Science 1 by Tino Schneidewind
 in this repository I work through the course Applied Geodata Science 1 and here I will submit my graded reports.
+My final reports will be saved in the vignettes folder!
 
 
 ## Folders
@@ -34,4 +35,4 @@ markdown code!
 
 The `vignettes` folder contains dynamic notebooks, i.e. R markdown files. These
 might serve a dual use between analysis and manuscript. 
-My final reports will be stored here. 
+Only my final reports will be stored here!
