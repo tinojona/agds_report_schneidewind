@@ -1,4 +1,4 @@
-# adgs_report_schneidewind
+# Applied Geodata Science 1 by Tino Schneidewind
 in this repository I work through the course Applied Geodata Science 1 and here I will submit my graded reports.
 
 
