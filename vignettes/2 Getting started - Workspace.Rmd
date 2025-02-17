@@ -1,0 +1,130 @@
+---
+title: "2 Getting started - Workspace"
+author: "Tino Schneidewind"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercises
+
+### 1. Dimensions of a circle
+I chose to write a *function* to get the dimensions of a circle based on the radius as a text output. This enables me to try out different radii efficiently or just try out random ones. 
+
+```{r dimensions}
+# function
+circle <- function(r){
+  
+  # formula for area of the circle
+  area = pi * r^2
+  
+  # formula for circumference of the circle
+  circ = 2 * pi * r
+
+  # text output for both
+  print(paste0("the area of the circle with the radius of ", r, " is: ",
+               round(area, digits = 2)))
+
+  print(paste0("the circumference of the circle with the radius of ", r, " is: ",
+               round(circ, digits=2)))
+}
+
+# call of the function with 
+circle(round(runif(1,1,10), digits = 2))
+```
+<br>
+
+### 2. Sequence of numbers
+The most efficient way to create a sequence of 5 numbers from 0 to pi using 5 number is the *seq()* function.
+
+```{r sequence}
+vec <- seq(0, pi ,length = 5)
+print(vec)
+```
+<br>
+
+### 3. Gauss sum
+Sadly I was not as intelligent as young Carl in primary school. But luckily I don't have to. I can use the *sum()* function. I doubt that Carl was as fast as my 3.2 GHz processor.
+```{r gauss}
+print(paste0("The answer is  ",sum(1:100), " Mr. Gauss"))
+```
+<br>
+
+### 4. Magic trick algorithm
+Somebody showed this magic trick to me in middle school, truly fascinating to a 12 year old! Again a function ensures a fast cycle of dopamine rushes.
+
+```{r magic}
+magic <- function(x){
+  
+  #save original value
+  b <- x
+  
+  print(paste0("Your chose the number: ", b, ". Abrakadabra!!!"))
+  print("..plus 1..times 2..plus 4..divided by 2..minus the original number..")
+  
+  # sequence of maths
+  x <- x + 1
+  x <- x * 2
+  x <- x + 4
+  x <- x / 2
+  x <- x - b
+
+  print(paste0("Your new number is: ", x, ". Try one more time to see the magic!"))
+}
+
+# call magic
+magic(666)
+```
+<br>
+
+### 5. Vectors
+R can be used to summarize and and get a first look at river data.
+
+```{r vectors}
+# data
+data_rivers <- datasets::rivers
+
+# class of the data
+class(data_rivers)
+
+# length of the data
+length(data_rivers)
+
+# mean, minimum and maximum
+mean(data_rivers); min(data_rivers);max(data_rivers) 
+
+# median and 33th percentile
+quantile(data_rivers, c(.5,.33))
+```
+<br>
+
+### 6. Data frames
+Lets find the geographic location of the largest earthquake of the *quakes* dataset!
+
+```{r quakes}
+# data
+data_quakes <- datasets::quakes
+
+# dimensions
+dim(data_quakes)
+
+# largest magnitude
+magnitude_max <- max(data_quakes$mag)
+
+# location
+paste0("location: latitude: ", data_quakes$lat[data_quakes$mag == magnitude_max]," and longitude: " , data_quakes$lon[data_quakes$mag == magnitude_max])
+```
+
+<br>
+
+
+
+
+
+
+
+
+
