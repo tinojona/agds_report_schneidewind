@@ -39,10 +39,10 @@ x <- x - x_init
 print(x)
 
 ## vectors
-data <- datasets::rivers
-class(data); length(data)
+data_rivers <- datasets::rivers
+class(data_rivers); length(data_rivers)
 
-mean(data); min(data);max(data); quantile(data, c(.5,.33))
+mean(data_rivers); min(data_rivers);max(data_rivers); quantile(data_rivers, c(.5,.33))
 
 ## data frames
 data_quakes <- datasets::quakes
