@@ -1,0 +1,31 @@
+---
+title: "4 Data wrangling - Report Exerise"
+author: "Tino Schneidewind"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+## Analyzing changes in soil organic matter during elevated CO2 experiments
+ 
+In this report exercise, I will convert a bad example for Open Science data practices into a data set that is usable and consequently allows for a reproducible workflow. The data is taken from *Groenigen, Kees Jan van, Xuan Qi, Craig W. Osenberg, Yiqi Luo, and Bruce A. Hungate. “Faster Decomposition Under Increased Atmospheric CO2 Limits Soil Carbon Storage.” Science 344, no. 6183 (May 2, 2014): 508–9. [https://doi.org/10.1126/science.1249534.](10.1126/science.1249534).* Before using it here I cleaned it manually by deleting empty rows and by filling the column *Experiments*.
+
+
+```{r preamble, message=FALSE, warning=FALSE}
+# libraries
+library(dplyr); library(lubridate); library(tidyr); library(readr)
+
+# clean data
+data <- read_csv("../data/groenigen_DBS1.csv")[,1:11]
+```
+<br>
+
+
+
+
+
+
