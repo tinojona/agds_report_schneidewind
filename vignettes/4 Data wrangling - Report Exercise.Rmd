@@ -52,7 +52,7 @@ knitr::kable(data[1:5,1:9],
 ### 1. Introduction
 In the era of climate change, it is vital to understand the effects of increased atmospheric CO2 concentrations on ecosystems. Soil stores carbon in the form of organic and inorganic matter. Organic soil matter is cut-up dead biomass primarily contributed by plants. The growth of plants is regulated by their photosynthesis rate which can be limited or enhanced by the abundance of atmospheric CO2. 
 
-In this report I will investigate whether increased atmospheric CO2 leads to and increasing storage of carbon in the soil. I hypothsize that (i) higher CO2 concentrations lead to a short term increase in soil carbon storage and (ii) that soil carbon will eventually reach an equilibrium at those higher concentrations and not rise further.  
+In this report I will investigate whether increased atmospheric CO2 leads to and increasing storage of carbon in the soil. I hypothesize that (i) higher CO2 concentrations lead to a short term increase in soil carbon storage and (ii) that soil carbon will eventually reach an equilibrium at those higher concentrations and not rise further.  
 
 <br>
 
@@ -76,7 +76,7 @@ To get the average log-response ratio for each phase across all experiments we:
 3. then average over all values of each phase.
  
  
-The averaging of the log-response ratios had to be adjusted, because not all phases had measured over enough time to represent all of our phases or were missing data. Consequently, we had to exclude all response ratios from the averaging process that were either not a number (NaN) and exactly 0 because one or both of the division partners were missing.
+The averaging of the log-response ratios had to be adjusted, because not all phases had measured over enough time to represent all of our phases or were missing data. Consequently, we had to exclude all response ratios from the averaging process that were either not a number (NaN) and exactly 0 because one or both of the division partners were missing. A response ratio of 0 could also mean that there is exactly no effect of the increased CO2 concentrations. However, having precisely no difference is highly unlikely and could also result out of measurement errors.
 <br>
 
 ```{r RR}
@@ -117,7 +117,7 @@ data_RR_means <- data_aggregated |>
 
 ### 3. Results
 
-There are clear differences between experiments and their recorded average soil carbon concentration (Table 2). From the 5 experiments shown in Table 2, there is no clear pattern visible between early, mid and late phase soil carbon concentrations. Response ratios varied from phase to phase but also experiment to experiment. Multiple experiments did not measure soil organic matter for all of our defined phases. Consequently,32% of all response ratios are missing. 
+There are clear differences between experiments and their recorded average soil carbon concentration (Table 2). From the 5 experiments shown in Table 2, there is no clear pattern visible between early, mid and late phase soil carbon concentrations. Response ratios varied from phase to phase but also experiment to experiment. Multiple experiments did not measure soil organic matter for all of our defined phases. Consequently, 32% of all response ratios are missing. 
 
 ```{r data aggregated table, echo=FALSE}
 # find out the percentage of missing RR of all phases
@@ -125,47 +125,21 @@ There are clear differences between experiments and their recorded average soil 
 # -> 32%
 
 # round values and replace NaNs with "-"
-data_aggregated <- data_aggregated |>
+data_aggregated_table <- data_aggregated |>
   mutate(across(where(is.numeric), ~ round(., 2))) |>
   mutate(across(everything(), ~ifelse(is.nan(.), "-", .)))
 
-knitr::kable(data_aggregated[1:5,],  
+knitr::kable(data_aggregated_table[1:5,],  
              col.names = c("Experiment","ACO2_early","ICO2_early","ACO2_mid","ICO2_mid","ACO2_late","ICO2_late", "RR_early", "RR_mid", "RR_late"), 
              digits = 2, 
              caption = "Table 2: Cutout of the aggregated data.")
 
 ```
 
-```{r boxplot, echo=FALSE}
-data_aggregated_CO2_long <- data_aggregated[,2:7] |>
-  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
-data_aggregated_CO2_long$Variable <- factor(data_aggregated_CO2_long$Variable, levels = colnames(data_aggregated[,2:7]))
-
-
-ggplot(data_aggregated_CO2_long, aes(x = factor(Variable), y = Value, fill = Variable)) +
-  geom_boxplot() +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
-  ) #+
-#   labs(title = "", x = "treatments", y = "soil carbon concentrations [g C/m2]", fill = "Treatment") +
-#   scale_fill_viridis_d(option = "plasma", labels = c("mean_ambient_CO2_early" = "Ambient Early",
-#                                                      "mean_ambient_CO2_mid" = "Ambient Mid",
-#                                                      "mean_ambient_CO2_late" = "Ambient Late",
-#                                                      "mean_increased_CO2_early" = "Increased Early",
-#                                                      "mean_increased_CO2_mid" = "Increased Mid",
-#                                                      "mean_increased_CO2_late" = "Increased Late"))
-# 
-# 
-
-
-```
-
 
 <br>
 
-Through averaging over all experiments we get a more representative picture of the effect of increased amtospheric carbon on soil organic matter (Table 3). These averages show an increase in the soil organic matter due to elevated CO2 levels from the first phase (0-3 years) to the second phase (3-6 years) by a factor of 10. However, after 6 years and longer, the soil organic matter concentration is less in the scenario of elevated CO2 compared to the ambient CO2 scenario, leading to a negative response ratio. 
+Through averaging over all experiments we get a more representative picture of the effect of increased atmospheric carbon on soil organic matter (Table 3). These averages show an increase in the soil organic matter due to elevated CO2 levels in the first phase (0-3 years). However already at the second phase (3-6 years) we have a negative response ratio indicating less carbon in the elevated CO2 scenario. After 6 years, the difference between elevated CO2 soil and ambient CO2 soil decreases again but stays as in phase two with slightly larger soil carbon concentrations in the ambient scenario.
 
 ```{r RR table, echo=FALSE}
 knitr::kable(data_RR_means,  
@@ -182,16 +156,6 @@ knitr::kable(data_RR_means,
 <br>
 
 ### 4. Discussion
-
-
-What are the data that you are looking at?
-What do you expect your analysis to show, what is your hypothesis? How should soil organic matter content change under elevated CO?
-Interpret your results after aggregating the data: What do your final numbers mean? Do they support your initial hypothesis? Why so, why not?
-
-
+I hypothesized that elevated CO2 concentrations could lead to a short term increase in soil carbon storage, which would reach an equilibrium with higher concentrations in the elevated CO2 scenario. I did find soil carbon to increase at first due to the increased abundance of atmospheric CO2, however, after some time the soil carbon decreased again below levels of the ambient CO2 scenario. Interestingly, the soil stores less carbon with higher atmospheric carbon availability. The authors of *Groenigen et al. (2014)* argue that this could be due to an increase in the microbial activity that decomposes soil organic carbon, which I did not take into account while formulating my hypotheses. These microbes respirate soil organic carbon faster than it is produced in elevated CO2 conditions, leading to an equilibrium below the levels of the ambient scenario. The global increase in temperature could even further exacerbate this shift to a decrease of soil organic carbon storage. This could have dire consequences as soils would not act as a carbon sink that is able to keep up with rising CO2 concentrations, according to my results.
 
 <br>
-
-### 5. Conclusion
-
-
