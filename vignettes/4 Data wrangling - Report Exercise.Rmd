@@ -12,7 +12,7 @@ rm(list = ls())
 
 ## Analyzing changes in soil organic matter during elevated CO2 experiments
  
-In this report exercise, I will convert a bad example for Open Science data practices into a data set that is usable and consequently allows for a reproducible workflow. Additionally, I will investigate the effect of increased CO2 on soil organic matter.
+In this report exercise, I will practice Open Science principles by converting a badly published data set into a data set that is usable and consequently allows for a reproducible workflow. Afterward, I will investigate the effect of increased atmospheric CO2 concentrations on soil organic matter using the previously cleaned data set.
 
 <br>
 
@@ -22,15 +22,14 @@ The data is taken from *Groenigen, Kees Jan van, Xuan Qi, Craig W. Osenberg, Yiq
 * deleting the first 3 rows that were empty,
 * replacing spaces with "_" in column names, 
 * filling the column *Experiments*,
-* converting the column depth to a machine readable numeric value,
-* converting *Sample dates* to a homogeneous date format
+* converting the column depth to a machine readable numeric value and
+* converting *Sample dates* to a homogeneous date format.
 
 <br>
 
 ```{r preamble, message=FALSE, warning=FALSE}
 # libraries
-library(dplyr); library(lubridate); library(tidyr); library(readr);library(kableExtra)
-
+library(dplyr); library(lubridate); library(tidyr); library(readr);library(kableExtra);library(ggplot2)
 # clean data
 data <- read_csv("../data/groenigen_DBS1.csv", locale = locale(encoding = "UTF-8"))[,1:11]
 
@@ -42,38 +41,42 @@ data <- data |>
 <br>
 
 ```{r data table, echo=FALSE}
-knitr::kable(data[1:10,1:9], 
+knitr::kable(data[1:5,1:9], 
              col.names = c("Experiment","Citation","Depth","Date","Time","AmbientCO2","IncreasedCO2", "nAmbient", "nIncreased"),
-             caption = "Data Overview", 
-             align = c("l","l","c","l",rep("c",5))) |>
-  kable_styling(bootstrap_options = c("striped"))
+             caption = "Table 1: Data overview without the columns \"Desciptions\" and \"Value treatment\".", 
+             align = c("l","l","c","l",rep("c",5)))
+
 
 ```
 
 ### 1. Introduction
-In the era of climate change, it is vital to understand the effects of increased atmospheric CO2 concentrations on ecosystems. Soil stores carbon in organic and inorganic matter. Organic soil matter is cut-up dead biomass primarily contributed by plants whos growth is regulated by their photosynthesis rate which can be limited or enhanced by the abundance of atmospheric CO2. 
+In the era of climate change, it is vital to understand the effects of increased atmospheric CO2 concentrations on ecosystems. Soil stores carbon in the form of organic and inorganic matter. Organic soil matter is cut-up dead biomass primarily contributed by plants. The growth of plants is regulated by their photosynthesis rate which can be limited or enhanced by the abundance of atmospheric CO2. 
+
+In this report I will investigate whether increased atmospheric CO2 leads to and increasing storage of carbon in the soil. I hypothsize that (i) higher CO2 concentrations lead to a short term increase in soil carbon storage and (ii) that soil carbon will eventually reach an equilibrium at those higher concentrations and not rise further.  
 
 <br>
 
 ### 2. Methods
-We analyze this effect on the growth influence of plant by comparing two soil samples, one from an environment with ambient CO2 concentrations, the other with increased CO2 concentrations.
+We analyze the effect of CO2 on soil carbon concentrations by comparing two soil samples, one from an environment with ambient CO2 concentrations, the other with increased CO2 concentrations.
 
-We work with data provided by *Groenigen et al. (2014)* who summarized the existing literature on the effect of elevated CO2 concentrations on soil organic matter. We calculate the log-response ratio comparing ambient and elevated soil organic matter across all experiment. However, we will distinguish between different time phases after the start of the experiment. These could indicate a timely development and possibly changes in the reaction of the soil organic matter to the increased CO2 concentration, as well as a possible equilibrium. The phases are:
+We work with data provided by *Groenigen et al. (2014)* who summarized existing literature on the responses of elevated CO2 concentrations on soil organic matter. We calculate the log-response ratio comparing ambient CO2 and elevated CO2 soil organic matter across all experiment. However, we will distinguish between different time phases after the start of the experiment. These could indicate a timely development of the response to the elevated CO2 concentrations. Also these phases could show the formation of a possible equilibrium. The phases are:
 
-* early = up to 3 years
-* mid = between 3 and 6 years
-* late = more than 6 years
+* early: start of the experiment and up to 3 years
+* mid: between 3 and 6 years after the start of the experiment
+* late: more than 6 years since the start of the experiment
 
-The formula used for calculating the log-response ratio RR is:
+The formula used for calculating the log-response ratio RR is with $x$ indicating the concentration of soil carbon in different scenarios:
 $$RR = ln( \frac{x_{elevated}}{x_{ambient}} )$$
 
 
 To get the average log-response ratio for each phase across all experiments we:
 
-1. calculated the averages of ambient and increased for every experiment with respect to the phase,
-2. then calculated the log-response ratios of all existing experiment phase pairs
-3. and then average over all values of each phase.
+1. calculated the averages of ambient and increased CO2 conditions for every experiment with respect to the phases,
+2. then calculated the log-response ratios of all existing experiment phase pairs and
+3. then average over all values of each phase.
  
+ 
+The averaging of the log-response ratios had to be adjusted, because not all phases had measured over enough time to represent all of our phases or were missing data. Consequently, we had to exclude all response ratios from the averaging process that were either not a number (NaN) and exactly 0 because one or both of the division partners were missing.
 <br>
 
 ```{r RR}
@@ -103,9 +106,9 @@ data_aggregated <- data |>
 
 # 3. average the response ratios for every phase
 data_RR_means <- data_aggregated |>
-  summarize(mean_RR_early = mean(RR_early[!is.nan(RR_early)], na.rm = T),        # early
-            mean_RR_mid   = mean(RR_mid[!is.nan(RR_mid)], na.rm = T),            # mid
-            mean_RR_late  = mean(RR_late[!is.nan(RR_late)], na.rm = T)           # late
+  summarize(mean_RR_early = mean(RR_early[!is.nan(RR_early) & RR_early != 0], na.rm = T),        # early
+            mean_RR_mid   = mean(RR_mid[!is.nan(RR_mid) & RR_early != 0], na.rm = T),            # mid
+            mean_RR_late  = mean(RR_late[!is.nan(RR_late) & RR_early != 0], na.rm = T)           # late
   )
 ```
 
@@ -114,33 +117,70 @@ data_RR_means <- data_aggregated |>
 
 ### 3. Results
 
-
+There are clear differences between experiments and their recorded average soil carbon concentration (Table 2). From the 5 experiments shown in Table 2, there is no clear pattern visible between early, mid and late phase soil carbon concentrations. Response ratios varied from phase to phase but also experiment to experiment. Multiple experiments did not measure soil organic matter for all of our defined phases. Consequently,32% of all response ratios are missing. 
 
 ```{r data aggregated table, echo=FALSE}
-knitr::kable(data_aggregated[1:10,],  
-             col.names = c("Experiment","ACO2_early","ICO2_early","ACO2_mid","ICO2_mid","ACO2_late","ICO2_late", "RR_early", "RR_mid", "RR_late"), digits = 2, 
-             caption = "Aggregated Data")|>
-             # align = c("l","l","c","l",rep("c",5))) 
-             
-  kable_styling(bootstrap_options = c("striped"))
+# find out the percentage of missing RR of all phases
+# nan_percentage <- sum(is.nan(as.matrix(data_aggregated[,8:10]))) / prod(dim(data_aggregated[,8:10])) * 100
+# -> 32%
+
+# round values and replace NaNs with "-"
+data_aggregated <- data_aggregated |>
+  mutate(across(where(is.numeric), ~ round(., 2))) |>
+  mutate(across(everything(), ~ifelse(is.nan(.), "-", .)))
+
+knitr::kable(data_aggregated[1:5,],  
+             col.names = c("Experiment","ACO2_early","ICO2_early","ACO2_mid","ICO2_mid","ACO2_late","ICO2_late", "RR_early", "RR_mid", "RR_late"), 
+             digits = 2, 
+             caption = "Table 2: Cutout of the aggregated data.")
 
 ```
 
-NaNs were introduced through the summarizing over phases even though not every phase was represented in every experiment.
+```{r boxplot, echo=FALSE}
+data_aggregated_CO2_long <- data_aggregated[,2:7] |>
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value")
+data_aggregated_CO2_long$Variable <- factor(data_aggregated_CO2_long$Variable, levels = colnames(data_aggregated[,2:7]))
+
+
+ggplot(data_aggregated_CO2_long, aes(x = factor(Variable), y = Value, fill = Variable)) +
+  geom_boxplot() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) #+
+#   labs(title = "", x = "treatments", y = "soil carbon concentrations [g C/m2]", fill = "Treatment") +
+#   scale_fill_viridis_d(option = "plasma", labels = c("mean_ambient_CO2_early" = "Ambient Early",
+#                                                      "mean_ambient_CO2_mid" = "Ambient Mid",
+#                                                      "mean_ambient_CO2_late" = "Ambient Late",
+#                                                      "mean_increased_CO2_early" = "Increased Early",
+#                                                      "mean_increased_CO2_mid" = "Increased Mid",
+#                                                      "mean_increased_CO2_late" = "Increased Late"))
+# 
+# 
+
+
+```
+
 
 <br>
 
+Through averaging over all experiments we get a more representative picture of the effect of increased amtospheric carbon on soil organic matter (Table 3). These averages show an increase in the soil organic matter due to elevated CO2 levels from the first phase (0-3 years) to the second phase (3-6 years) by a factor of 10. However, after 6 years and longer, the soil organic matter concentration is less in the scenario of elevated CO2 compared to the ambient CO2 scenario, leading to a negative response ratio. 
 
 ```{r RR table, echo=FALSE}
 knitr::kable(data_RR_means,  
-             col.names = c("average RR early phase","average RR mid phase","average RR late phase"), digits = 4,
-             caption = "Response Ratios to Treatments") 
+             col.names = c("RR early phase","RR mid phase","RR late phase"), digits = 4,
+             caption = "Table 3: Response ratios to increased CO2 concentrations over 3 phases.") 
 
 ```
 
 
 
+
+
+
 <br>
+
 ### 4. Discussion
 
 
@@ -151,6 +191,7 @@ Interpret your results after aggregating the data: What do your final numbers me
 
 
 <br>
+
 ### 5. Conclusion
 
 
