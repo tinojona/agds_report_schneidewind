@@ -113,15 +113,42 @@ daily_GPP <- half_hourly_fluxes |>
 
 
 
+# data cleaning routine
+
+half_hourly_fluxes <- select(
+  half_hourly_fluxes,
+  starts_with("TIMESTAMP"),
+  ends_with("_F"),
+  GPP_NT_VUT_REF,
+  NEE_VUT_REF_QC,
+  starts_with("SWC_F_MDS_"),
+  -contains("JSB"),
+  NIGHT
+)
+
+half_hourly_fluxes$TIMESTAMP_START <- ymd_hm(half_hourly_fluxes$TIMESTAMP_START)
+
+half_hourly_fluxes |>
+  mutate(year = year(TIMESTAMP_START),
+         month = month(TIMESTAMP_START),
+         doy = yday(TIMESTAMP_START)     # day of year
+  ) |>
+  select(TIMESTAMP_START, TIMESTAMP_END, year, month, doy)  # for displaying
+
+half_hourly_fluxes <- half_hourly_fluxes |>
+  mutate(across(where(is.numeric), ~na_if(., -9999)))
+
+half_hourly_fluxes |>
+  filter(NEE_VUT_REF_QC %in% c(0,1))
+
+half_hourly_fluxes |>
+  mutate(GPP_NT_VUT_REF = ifelse(NEE_VUT_REF_QC %in% c(0,1), GPP_NT_VUT_REF, NA))
 
 
+half_hourly_fluxes |>
+  drop_na()
 
 
-
-
-
-
-
-
+write_csv(half_hourly_fluxes, file = "../bigdata/FLX_CH-Lae_FLUXNET2015_FULLSET_HH_2004-2006_CLEAN.csv")
 
 
