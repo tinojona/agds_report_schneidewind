@@ -16,7 +16,15 @@ target variable : Ozone, think about patterns and relationships
 
 Must do:
 - description of the airquality data set: https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality
-- A research question: predictability using Wind/Solar.R/Temp or is there a weekly cycle,
+
+- A research question: When is human health most threatened and how can we predict this threat best based on other variables?
+ppb threshold = 51 ppb (100 ug/m3)
+
+predictability using Wind/Solar.R/Temp and is there a weekly/monthly cycle,
+
+because we are interested in the outliers we wont correct for them.
+
+
 - At least three statistical metrics from your dataset that aid you in answering your question (e.g., mean values, ranges, etc.).
 - At least three publishable figures or tables that show important relationships that aid you in answering your question (e.g., outliers, temporal patterns, scatterplots, etc.).
 - Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?
@@ -24,17 +32,122 @@ Must do:
 
 ```{r data}
 # libraries
-library(dplyr); library(lubridate); library(tidyr); library(readr); library(stringr); library(purrr)
+library(dplyr); library(lubridate); library(tidyr); library(readr); library(stringr); library(purrr); library(caret)
 
 # data
-airquality <- datasets::airquality
+airquality <- datasets::airquality |>
+  
+    mutate(
+    # add date
+    date = as.Date(paste0(as.character(Day),"-", as.character(Month), "-", "1973" ), , format="%d-%m-%Y"),
+    
+    # add day of week (dow)
+    dow  = weekdays(date)    )
 
-plot(airquality$Ozone, airquality$Temp)
-plot(airquality$Ozone, airquality$Solar.R)
-plot(airquality$Ozone, airquality$Wind)
 
-hist(airquality$Wind)
+  
+```
+
+
+THE PLAN
+
+IDENTIFY OUTLIERS BY setting all values NA if they are not within the bounds of Q1-1.5IQR an Q3+1.5IQR
+
+```{r outliers}
+
+airquality <- airquality |> 
+  
+  mutate(
+    
+    across(c(Ozone,  Solar.R, Wind, Temp), ~ {
+      
+      IQR_val <- IQR(.x, na.rm = TRUE)
+      Q1 <- quantile(.x, 0.25, na.rm = TRUE)
+      Q3 <- quantile(.x, 0.75, na.rm = TRUE)
+      
+      if_else(.x < Q1 - 1.5 * IQR_val | .x > Q3 + 1.5 * IQR_val, NA_real_, .x)
+    }, .names = "{.col}_clean")
+    
+  )
+
+
 
 
 ```
 
+
+
+MONTHLY WEEKLY CYCLE OF OZONE
+
+
+```{r weekly}
+
+airquality_map <- airquality |> 
+  group_by(Month, dow) |>
+  summarize(
+    Ozone = mean(Ozone_clean, na.rm = TRUE), .groups = "drop") |>
+  mutate(dow = factor(dow, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+                      , ordered = TRUE))
+
+
+
+
+ggplot(airquality_map, aes(x = Month, y = dow, fill = Ozone)) +
+  geom_tile() +
+  scale_fill_gradientn(
+    colors = c("lightyellow","darkorange", "darkred"),  # Define the color transition
+    values = scales::rescale(c(0, 50, 51, max(airquality_map$Ozone, na.rm = TRUE))), 
+    na.value = "white"
+  ) +
+  labs(
+    x = "Month",
+    y = "Day of the Week",
+    fill = "Ozone",
+    title = "Ozone Across Months and Weekdays"
+  ) +
+  theme_minimal()
+
+```
+
+
+
+
+
+ PREDICTABILITY USING DIFFERENT VALUE SPECIFICATIONS
+ 
+ 
+ 
+ 
+```{r prediction}
+
+lm_spec = c("Ozone_clean ~ Temp_clean", 
+            "Ozone_clean ~ Wind_clean", 
+            "Ozone_clean ~ Solar.R_clean",
+            "Ozone_clean ~ Temp_clean + Wind_clean", 
+            "Ozone_clean ~ Temp_clean + Solar.R_clean", 
+            "Ozone_clean ~ Wind_clean + Solar.R_clean",
+            "Ozone_clean ~ Temp_clean + Wind_clean + Solar.R_clean")
+
+
+
+for (i in lm_spec) {
+  
+  airquality_filtered <- airquality |> 
+    select(all_of(all.vars(as.formula(i)))) |>  # Select only relevant variables
+    na.omit()  # Remove NA rows
+  
+  mod <- lm(as.formula(i), data = airquality_filtered, na.action = na.exclude)
+  
+  pred <- predict(mod, airquality_filtered, na.action = na.exclude)
+  
+  print(paste0(i, postResample(airquality_filtered$Ozone_clean, pred)[["RMSE"]]))
+  
+}
+
+```
+ 
+ 
+ 
+ 
+ 
+ 
