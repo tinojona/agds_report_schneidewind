@@ -1,0 +1,40 @@
+---
+title: "5 Air Quality - Report Exercise"
+author: "Tino Schneidewind"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+## Telling a story from data
+
+target variable : Ozone, think about patterns and relationships
+
+Must do:
+- description of the airquality data set: https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality
+- A research question: predictability using Wind/Solar.R/Temp or is there a weekly cycle,
+- At least three statistical metrics from your dataset that aid you in answering your question (e.g., mean values, ranges, etc.).
+- At least three publishable figures or tables that show important relationships that aid you in answering your question (e.g., outliers, temporal patterns, scatterplots, etc.).
+- Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?
+- max 400 words (aka 700)
+
+```{r data}
+# libraries
+library(dplyr); library(lubridate); library(tidyr); library(readr); library(stringr); library(purrr)
+
+# data
+airquality <- datasets::airquality
+
+plot(airquality$Ozone, airquality$Temp)
+plot(airquality$Ozone, airquality$Solar.R)
+plot(airquality$Ozone, airquality$Wind)
+
+hist(airquality$Wind)
+
+
+```
+
