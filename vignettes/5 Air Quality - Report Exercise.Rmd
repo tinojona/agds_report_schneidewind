@@ -6,72 +6,83 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,messages=FALSE, warning=FALSE)
 rm(list = ls())
 ```
 
 ## Telling a story from data
+### Introduction:
 
-target variable : Ozone, think about patterns and relationships
+Ozone and health impacts, urgency
 
-Must do:
+- Research questions: 
+When is human health most threatened?
+ppb threshold = 51 ppb (100 ug/m3)
+- timeseries plot
+- heatmap (months/weekdays)
+
+How well can we predict this threat best based on other variables to extrapolate this threat to other areas?
+
+
+### Methods
 - description of the airquality data set: https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality
 
-- A research question: When is human health most threatened and how can we predict this threat best based on other variables?
-ppb threshold = 51 ppb (100 ug/m3)
+method for exposure: WHO threshold
 
-predictability using Wind/Solar.R/Temp and is there a weekly/monthly cycle,
+method for precicatbility: lm using Wind/Solar.R/Temp
+
 
 because we are interested in the outliers we wont correct for them.
 
-
+### Notes
 - At least three statistical metrics from your dataset that aid you in answering your question (e.g., mean values, ranges, etc.).
 - At least three publishable figures or tables that show important relationships that aid you in answering your question (e.g., outliers, temporal patterns, scatterplots, etc.).
 - Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?
 - max 400 words (aka 700)
+- Do I need to scale for lm()? Kinda not but could be nice to try out
 
-```{r data}
+```{r data, message=FALSE, warning=FALSE}
 # libraries
 library(dplyr); library(lubridate); library(tidyr); library(readr); library(stringr); library(purrr); library(caret)
 
-# data
-airquality <- datasets::airquality |>
+# read downdloaded data
+airquality <- read_csv("../data/airquality.csv") |>
   
-    mutate(
-    # add date
-    date = as.Date(paste0(as.character(Day),"-", as.character(Month), "-", "1973" ), , format="%d-%m-%Y"),
+  mutate(
+  # add date
+  date = as.Date(paste0(as.character(Day),"-", as.character(Month), "-", "1973" ), , format="%d-%m-%Y"),
     
-    # add day of week (dow)
-    dow  = weekdays(date)    )
-
-
+  # add day of week (dow)
+  dow  = weekdays(date),
+  
+  # WHO threshold of 51 ppb
+  thresh = if_else(Ozone > 51, "Above", "Below"),
+  
+  # convert Temperature to celsius 
+  Temp = (Temp - 32) * (5/9))
   
 ```
 
 
-THE PLAN
+TIME SERIE OF OZONE WITH THRESHOLD
 
-IDENTIFY OUTLIERS BY setting all values NA if they are not within the bounds of Q1-1.5IQR an Q3+1.5IQR
+```{r timeseries, echo=FALSE}
 
-```{r outliers}
-
-airquality <- airquality |> 
+ggplot(airquality, aes(x = date, y = Ozone)) +
+  geom_abline(slope = 0, intercept = 51, linetype = "dashed") +
+  geom_line(linewidth = 1) +
+  geom_point(aes(color = thresh), size = 1.2) +
+  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
   
-  mutate(
-    
-    across(c(Ozone,  Solar.R, Wind, Temp), ~ {
-      
-      IQR_val <- IQR(.x, na.rm = TRUE)
-      Q1 <- quantile(.x, 0.25, na.rm = TRUE)
-      Q3 <- quantile(.x, 0.75, na.rm = TRUE)
-      
-      if_else(.x < Q1 - 1.5 * IQR_val | .x > Q3 + 1.5 * IQR_val, NA_real_, .x)
-    }, .names = "{.col}_clean")
-    
-  )
-
-
-
+  
+  labs(
+    x = "Date",
+    y = "Ozone [ppb]",
+    title = "Ozone concentration in New York in 1973",
+    subtitle = "Excedance of WHO threshold",
+    color = "Threshold"
+  ) +
+  theme_classic()
 
 ```
 
@@ -81,17 +92,17 @@ MONTHLY WEEKLY CYCLE OF OZONE
 
 
 ```{r weekly}
-
 airquality_map <- airquality |> 
   group_by(Month, dow) |>
   summarize(
-    Ozone = mean(Ozone_clean, na.rm = TRUE), .groups = "drop") |>
-  mutate(dow = factor(dow, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    Ozone = mean(Ozone, na.rm = TRUE), .groups = "drop") |>
+  mutate(dow = factor(dow, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", 
+                                      "Friday", "Saturday", "Sunday")
                       , ordered = TRUE))
+```
 
 
-
-
+```{r weeklyplot, echo=FALSE}
 ggplot(airquality_map, aes(x = Month, y = dow, fill = Ozone)) +
   geom_tile() +
   scale_fill_gradientn(
@@ -103,7 +114,8 @@ ggplot(airquality_map, aes(x = Month, y = dow, fill = Ozone)) +
     x = "Month",
     y = "Day of the Week",
     fill = "Ozone",
-    title = "Ozone Across Months and Weekdays"
+    title = "Ozone Across Months and Weekdays",
+    subtitle = "Excedance of WHO threshold"
   ) +
   theme_minimal()
 
@@ -116,38 +128,63 @@ ggplot(airquality_map, aes(x = Month, y = dow, fill = Ozone)) +
  PREDICTABILITY USING DIFFERENT VALUE SPECIFICATIONS
  
  
+TABLE for different lm specs
  
- 
-```{r prediction}
+```{r lm}
 
-lm_spec = c("Ozone_clean ~ Temp_clean", 
-            "Ozone_clean ~ Wind_clean", 
-            "Ozone_clean ~ Solar.R_clean",
-            "Ozone_clean ~ Temp_clean + Wind_clean", 
-            "Ozone_clean ~ Temp_clean + Solar.R_clean", 
-            "Ozone_clean ~ Wind_clean + Solar.R_clean",
-            "Ozone_clean ~ Temp_clean + Wind_clean + Solar.R_clean")
+lm_comparison = data.frame(formula = c("Ozone ~ Temp","Ozone ~ Wind","Ozone ~ Solar.R",
+                                        "Ozone ~ Temp + Wind","Ozone ~ Temp + Solar.R","Ozone ~ Wind + Solar.R",
+                                        "Ozone ~ Temp + Wind + Solar.R"),
+                           R2 = rep(NA,7),
+                           R2_adj = rep(NA,7))
 
-
-
-for (i in lm_spec) {
+for (i in 1:nrow(lm_comparison)) {
   
-  airquality_filtered <- airquality |> 
-    select(all_of(all.vars(as.formula(i)))) |>  # Select only relevant variables
-    na.omit()  # Remove NA rows
+  # linear model
+  mod <- lm(as.formula(lm_comparison$formula[i]), data = airquality, na.action = na.exclude)
   
-  mod <- lm(as.formula(i), data = airquality_filtered, na.action = na.exclude)
+  # save R2 score
+  lm_comparison$R2[i] <- round(summary(mod)$r.squared, digits = 3)
   
-  pred <- predict(mod, airquality_filtered, na.action = na.exclude)
-  
-  print(paste0(i, postResample(airquality_filtered$Ozone_clean, pred)[["RMSE"]]))
-  
+  # save R2_adj score
+  lm_comparison$R2_adj[i] <- round(summary(mod)$adj.r.squared, digits = 3)
 }
+
+# sort results by R2_adj
+lm_comparison <- lm_comparison |> arrange(desc(R2_adj))
 
 ```
  
  
+```{r table lm, echo=FALSE}
+knitr::kable(lm_comparison, 
+             col.names = c("linear model formula","R2","adjusted R2"),
+             caption = "Table 1: Fit of the different linear model specifications.", 
+             align = c("l","c","c"))
+
+```
  
- 
+
+```{r lm plot, echo = FALSE}
+
+
+ggplot(airquality, aes(x = Temp, y = Ozone)) +
+  geom_point(aes(color = thresh ), size = 1.2)+
+  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
+  geom_smooth(formula = y ~ x + 0, method = "lm", se = FALSE, color = "black") +
+  
+  labs(
+    x = "Temperature [°C]",
+    y = "Ozone [ppb]",
+    title = "Linear association of daily temperature and ozone concentrations",
+    subtitle = "",
+    color = "Threshold"
+  ) +
+  theme_classic() +
+
+  annotate("text", x = 16, y = 130, label = "R2 adjusted", size = 5, color = "black") +
+  annotate("text", x = 14.6, y = 117, label = lm_comparison$R2_adj[lm_comparison$formula == "Ozone ~ Temp"], size = 4, color = "black")
+```
+
  
  
