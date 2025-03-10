@@ -10,49 +10,97 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 ```
 
-## objective:
+## Background
+The objective of this report exercise is to display a stepwise forward regression modeling GPP as a function of all predictors available in the half-hourly ecosystem flux [dataset](https://raw.githubusercontent.com/geco-bern/agds_book/refs/heads/main/book/data/df_for_stepwise_regression.csv).
 
-stepwise forward regression is to be performed for the task of modelling GPP_NT_VUT_REF as a function of predictors available in the dataset of half-hourly ecosystem fluxes.
 
 1. An evaluation of all bivariate models (single predictor), implementing just steps 1-3 of the algorithm described in Section 9.3.3.1.
 
 2. An implementation of stepwise forward regression, and a visualisation and discussion of its results.
 
-I keep siteid as a categorical predictor
-I will invetigate linear, quadratic, and exponential models
-```{r readdata, message=FALSE, warning=FALSE}
-# libraries
-library(ggplot2) # plotting
-library(dplyr)   # adjusting data
-library(tidyverse) # cleaning
-library(rlang)    # formula
-library(purrr)    # functions
-library(gridExtra) # plotting
-library(knitr)  # tables
-library(kableExtra) # nice tables
-# rm(list = ls())
 
-
-# data 
-half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv")|>
-  dplyr::select(-starts_with("TIMESTAMP")) |>
-  mutate(siteid = as.factor(siteid)) |>
-  tidyr::drop_na()
-
-```
 
 objective 1:
 
 bivariate models
 
-```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
-# variables for bivariate analysis
-vars <- colnames(half_hourly_fluxes[c(1:14,16)])
 
+```{r readdata, message=FALSE, warning=FALSE}
+# libraries
+library(ggplot2)     # plotting
+library(dplyr)       # adjusting data
+library(tidyverse)   # cleaning
+library(rlang)       # formula
+library(purrr)       # functions
+library(gridExtra)   # plotting
+library(knitr)       # tables
+library(kableExtra)  # nice tables
+
+
+# data 
+half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv")|>
+  dplyr::select(-starts_with("TIMESTAMP")) |>    # exclude time series
+  mutate(siteid = as.factor(siteid)) |>          # SiteID as factor
+  tidyr::drop_na()                               # remove incomplete rows
+
+```
+
+## Introduction
+Gross Primary Production (GPP; *variable: GPP_NT_VUT_REF*) describes the total amount of organic carbon assimilated by vegetation through photosynthesis. GPP is a key component in understanding ecosystem productivity, but also carbon cycling which is especially important due to climate change. GPP is affected by *environmental conditions* like light availability (intensity, duration, seasonality), temperature (enzyme activity), wateravailabililty (photosynthesis, stromatal openings during drought), but also *biotic factors* like the species (leaf area), succession (growth periods), herbivore and disease (biomass decrease).
+
+It is important to understand the predictors of GPP to accurately model GPP. For this we are trying to answer the following research questions:
+
+1. What is the single best linear predictor of GPP?
+2. How can GPP be best predited linearly using all available variables?
+
+
+## Methods
+To assess how GPP can be best modeled I performed a stepwise forward regression following these steps:
+
+1. Set the number of predictors to be considered to $p = 1$.
+2. Fit all regression models with $p$ predictors and compute their $R^2$.
+3. Select the model with $p$ predictors that achieves the highest $R^2$ (best fitting model) and compute its Akaiken information criterion score (AIC).
+4. Fit all regression models with $p + 1$  predictors that include the predictor selected at the previous step and compute their $R^2$. Select the best fitting model and compute its AIC.
+5. If the AIC of the model with $p + 1$ predictors is poorer than the AIC of the model with $p$ predictors, retain the model with $p$ predictors and quit. Otherwise, continue with with step 4.
+
+In this stepwise forward regression, I accounted for the following variables.
+
+```{r tablevariables, echo=FALSE}
+table_variables <- data.frame(Variable = c("Name", "Class"), 
+                              siteid   = c("Identification of site", "factor"),
+                              TA_F     = c("Air temperature", "numeric"),
+                              SW_IN_F     = c("Incoming shortwave radiation", "numeric"),
+                              LW_IN_F     = c("Incoming lingwave radiation", "numeric"),
+                              VPD_F     = c("Vapor pressure deficit", "numeric"),
+                              PA_F     = c("Atmospheric pressure", "numeric"),
+                              P_F     = c("Precipitation", "numeric"),
+                              WS_F     = c("Wind speed", "numeric"),
+                              TA_F_MDS     = c("Air temperature (gapfilled)", "numeric"),
+                              SW_IN_F_MDS     = c("Incoming shortwave radiation (gapfilled)", "numeric"),
+                              LW_IN_F_MDS     = c("Incoming lingwave radiation (gapfilled)", "numeric"),
+                              VPD_F_MDS     = c("Vapor pressure deficit (gapfilled)", "numeric"),
+                              CO2_F_MDS     = c("CO2 mole fraction (gapfilled)", "numeric"),
+                              PPFD_IN     = c("Photosynthetic photon flux density", "numeric"),
+                              USTAR     = c("Friction velocity", "numeric")
+                              )
+
+
+table_variables <- t(table_variables)
+
+table_variables[2:nrow(table_variables),] |>
+  kable(caption = "Prediction variables", col.names = c("Variable", "Description", "Class")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+
+Using the following function, I calculated the accuracy of all possible single linear predictors of GPP.
+
+```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
 # function to extract model performance
 fit_model <- function(var) {
   formula_mod <- as.formula(paste0("GPP_NT_VUT_REF ~ ", var))
-  mod <- lm(formula = formula_mod, data = half_hourly_fluxes)
+  mod         <- lm(formula = formula_mod, data = half_hourly_fluxes)
   
   tibble(
     predictor = var,
@@ -61,15 +109,12 @@ fit_model <- function(var) {
   )
 }
 
+
+# variables for bivariate analysis
+vars <- colnames(half_hourly_fluxes[c(1:14,16)])
+
 # apply function
 results_1 <- map_dfr(vars, fit_model) |> arrange(desc(R2))
-
-# present table
-results_1 |>
-  kable(caption = "Model Performance Metrics", digits = 3) |>
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-
-
 
 # save plots in order of performance
 vars <- results_1$predictor
@@ -78,25 +123,20 @@ plots_1 <- map(vars, ~ ggplot(half_hourly_fluxes, aes(x = !!sym(.x), y = GPP_NT_
                  geom_smooth(method = "lm", se = FALSE, color = "red") +
                  labs(x = .x, y = "GPP") +
                  theme_classic())
-
-
-# display plots
-# grid.arrange(grobs = plots_1, ncol = 3, nrow = 5)
-
 ```
 
 
-objective 2:
-stepwise
+
+To implement the stepwise forward regression I created a for loop that only stopped when the newest model was not performing best compared to all others.
 
 ```{r stepwise, message=FALSE, warning=FALSE}
-
 # empty data frame for saving of model performances
 stepwise = data.frame(predictor = " ",
                       R2 = 0,
                       AIC = Inf)
 
-for(i in 1:length(vars)){
+# if the NEW MODEL (the bottom one because rbind) is NOT THE BEST -> STOP
+while(min(stepwise$AIC) == stepwise$AIC[nrow(stepwise)]){
   
   # get individual predictors so that I can exclude them for future multiple predictor models
   stepwise_split <- unlist(strsplit(stepwise$predictor, " "))
@@ -106,27 +146,41 @@ for(i in 1:length(vars)){
   
   # extract and save the best performing NEW MODEL from results
   stepwise <- rbind(stepwise, results_2[results_2$AIC == min(results_2$AIC),])
-  
-  # if the NEW MODEL (the bottom one because rbind) is NOT THE BEST -> STOP
-  if(min(stepwise$AIC) != stepwise$AIC[nrow(stepwise)]){
-    break
-    }
-
 }
 
 # clean up the dataframe
 stepwise <- stepwise |>
-  slice(2:(n() - 1)) |>
-  mutate(predictor = substr(predictor, 5, nchar(predictor))) |>
+  slice(2:(n() - 1)) |>     # remove first (empty) and last (not best) performing model
+  mutate(predictor = substr(predictor, 5, nchar(predictor))) |>   # remove " + " at the start of predictors
   mutate(index = seq_along(predictor)) |>
   select(index, everything())
+```
 
+
+## Results
+
+### Single linear predictors
+
+```{r results1, warning=FALSE, message=FALSE, echo=FALSE}
+# present table
+results_1 |>
+  kable(caption = "Model Performance Metrics", digits = 3, col.names = c("Predictor", "R2", "AIC")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+```{r results1plots, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center', echo=FALSE}
+# display plots
+# grid.arrange(grobs = plots_1, ncol = 3, nrow = 5)
+```
+
+### Stepwise forward regression
+
+```{r results2, message=FALSE, warning=FALSE, echo = FALSE}
 # present table
 stepwise |>
-  kable(caption = "Stepwise Regression Model Performance Metrics", digits = 5) |>
+  kable(caption = "Stepwise Regression Model Performance Metrics", digits = 4, col.names = c("Index", "Predictor", "R2", "AIC")) |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-
-
 ```
 
 
