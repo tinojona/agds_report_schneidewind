@@ -14,26 +14,123 @@ rm(list = ls())
 
 
 
-```{r readdata, message=FALSE, warning=FALSE}
+```{r libraries, message=FALSE, warning=FALSE}
 # libraries
-
-
-
-# data 
-
-
-
-# for reproducability
-set.seed(1111999)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(caret)
+library(recipes)
+library(yardstick)
 ```
 
-## Introduction
+
+```{r readdata, message=FALSE, warning=FALSE, cache=TRUE}
+# data 
+daily_fluxes <- read_csv("../data/daily_fluxes_re_ml_01.csv") |>
+  select(TIMESTAMP,
+         GPP_NT_VUT_REF,
+         SW_IN_F,
+         VPD_F,
+         TA_F)
+
+# for reproducability
+set.seed(1982)
+
+# data splitting
+split <- rsample::initial_split(daily_fluxes, prop = 0.7, strata = "VPD_F")
+daily_fluxes_train <- rsample::training(split)
+daily_fluxes_test <- rsample::testing(split)
+
+# Model and pre-processing formulation, use all variables but LW_IN_F
+pp <- recipes::recipe(GPP_NT_VUT_REF ~ SW_IN_F + VPD_F + TA_F, 
+                      data = daily_fluxes_train |> drop_na()) |> 
+  recipes::step_BoxCox(recipes::all_predictors()) |> 
+  recipes::step_center(recipes::all_numeric(), -recipes::all_outcomes()) |>
+  recipes::step_scale(recipes::all_numeric(), -recipes::all_outcomes())
 
 
-## Methods
+# linear model
+mod_lm <- caret::train(
+  pp, 
+  data = daily_fluxes_train |> drop_na(), 
+  method = "lm",
+  trControl = caret::trainControl(method = "none"),
+  metric = "RMSE"
+)
 
-## Results
+# KNN model
+mod_knn <- caret::train(
+  pp, 
+  data = daily_fluxes_train |> drop_na(), 
+  method = "knn",
+  trControl = caret::trainControl(method = "none"),
+  tuneGrid = data.frame(k = 8),
+  metric = "RMSE"
+)
 
-## Discussion
+# load model eval and pred function
+source("../functions/eval_model.R")
+```
+
+
+```{r evalplot, message=FALSE, warning=FALSE, fig.align='center', fig.height=3, fig.width=6, cache=TRUE}
+
+# linear regression model
+eval_model(mod = mod_lm, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
+
+# KNN
+eval_model(mod = mod_knn, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
+```
+Why is the difference between the evaluation on the training and the test set larger for the KNN model than for the linear regression model?
+
+The difference in evaluation between the training and test sets is larger for the KNN model than for the linear regression model due to differences in their bias-variance tradeoff.
+
+KNN models have low bias (few assumptions about relationships in the data) but high variance, making them prone to overfitting. This means they capture noise in the training data, leading to strong performance on the training set but weaker generalization to new data, as seen in the lower test set accuracy. The fact that the KNN model performs slightly worse on the test set suggests it may be overfitting. A possible solution is to increase 
+𝐾
+K (currently set to 8) to smooth predictions and reduce variance.
+
+In contrast, linear models have higher bias and lower variance, meaning they learn a simpler, more generalizable relationship between predictors and the outcome. This makes them more robust to unseen data, which could explain why the linear model performs better on the test set than on the training set.
+
+
+Why does the evaluation on the test set indicate a better model performance of the KNN model than the linear regression model?
+
+The KNN model demonstrates better performance on the test set than the linear regression model, as indicated by its higher $R^2$ and lower RMSE.
+
+
+How would you position the KNN and the linear regression model along the spectrum of the bias-variance trade-off?
+
+KNN and linear regression fall on opposite ends of the bias-variance trade-off. KNN has low bias (makes few assumptions about the data) but high variance, meaning it can capture complex patterns but is prone to overfitting. Linear regression has high bias (assumes a linear relationship) but low variance, making it more stable but less flexible for capturing complex relationships. KNN is better for capturing non-linear patterns, while linear regression generalizes well when the true relationship is approximately linear.
+
+
+Visualise temporal variations of observed and modelled GPP for both models, covering all available dates.
+
+```{r datamerg}
+
+# linear regression model
+daily_fluxes$lm_fitted  <- pred_model(mod = mod_lm, 
+                                      df = daily_fluxes, 
+                                      df_train = daily_fluxes_train, 
+                                      df_test = daily_fluxes_test)
+
+# KNN
+daily_fluxes$knn_fitted <- pred_model(mod = mod_knn, 
+                                      df = daily_fluxes,
+                                      df_train = daily_fluxes_train,
+                                      df_test = daily_fluxes_test)
+
+```
+
+```{r timeseriesplot, echo=FALSE, fig.width=10, fig.height=5, fig.align='center', message=FALSE, warning=FALSE}
+
+daily_fluxes |> 
+  ggplot(aes(x = TIMESTAMP, y = lm_fitted)) +
+  geom_point(color = "red") +
+  # geom_point(aes(y = lm_fitted), color = "red") +
+  geom_point(aes(y = knn_fitted), color = "blue") +
+  theme_minimal()
+```
+
 
 <br>
