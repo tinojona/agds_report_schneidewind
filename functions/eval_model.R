@@ -60,3 +60,33 @@ eval_model <- function(mod, df_train, df_test){
 
   return(out)
 }
+
+
+
+# prediction model that outputs merged and ordered predictions
+# of combined train and test sets
+pred_model <- function(mod, df, df_train, df_test) {
+
+
+  # column name for predictions with model type
+  fitted_col <- paste0("fitted_", mod$method)
+
+  # remove missing data
+  df_train_clean <- df_train |> drop_na()
+  df_test_clean  <- df_test |> drop_na()
+
+  # predict for train and tes
+  df_train_clean[[fitted_col]] <- predict(mod, newdata = df_train_clean)
+  df_test_clean[[fitted_col]]  <- predict(mod, newdata = df_test_clean)
+
+  # rbind prediction data
+  df_combined <- bind_rows(df_train_clean, df_test_clean)
+
+  # merge with original timeseries of daily_data because of missing dates in train/test
+  df_merged <- left_join(df, df_combined, by = "TIMESTAMP") |> arrange(TIMESTAMP)
+
+  return(df_merged[[fitted_col]])
+}
+
+
+
