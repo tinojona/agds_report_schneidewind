@@ -1,0 +1,39 @@
+---
+title: "10 Supervised Machine Learning - Report Exerise"
+author: "Tino Schneidewind"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+## Background
+
+
+
+```{r readdata, message=FALSE, warning=FALSE}
+# libraries
+
+
+
+# data 
+
+
+
+# for reproducability
+set.seed(1111999)
+```
+
+## Introduction
+
+
+## Methods
+
+## Results
+
+## Discussion
+
+<br>
