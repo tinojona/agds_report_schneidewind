@@ -56,7 +56,7 @@ To assess how GPP can be best modeled using a combination of all possible predic
 
 In this stepwise forward regression, I accounted for the following variables displayed in Table 1.
 
-```{r tablevariables, echo=FALSE, cache=TRUE}
+```{r tablevariables, echo=FALSE}
 table_variables <- data.frame(Variable    = c("Name", "Class"), 
                               siteid      = c("Identification of site", "factor"),
                               TA_F        = c("Air temperature", "numeric"),
@@ -92,7 +92,7 @@ table_variables[2:nrow(table_variables), ] |>
 
 Using the following function, I calculated the accuracy ($R^2$, adjusted $R^2$, Akaiken information criterion AIC) of all possible single linear predictors and their combinations of GPP.
 
-```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center', cache=TRUE}
+```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
 # function to extract model performance
 fit_model <- function(var) {
   
@@ -141,7 +141,7 @@ plots_1   <- map2(vars, seq_along(vars), ~ {
 
 To implement the stepwise forward regression I created a for loop based on the previously described steps that only stops when the newest model was not performing better compared to the previous one.
 
-```{r stepwise, message=FALSE, warning=FALSE, cache=TRUE}
+```{r stepwise, message=FALSE, warning=FALSE}
 # empty data frame for saving of model performances
 stepwise <- data.frame(predictor = " ",
                       R2 = 0,
@@ -181,7 +181,7 @@ stepwise <- stepwise |>
 
 From all single linear predictors, photosynthetic photon flux density (PPFD_IN) was the most effective in predicting GPP, with an $R^2$ of 0.363 which indicates a moderate but limited capacity to predict GPP with 63.7% of the variance of GPP remaining unexplained (Table 2). Second and third best in predicting GPP were  incoming shortwave radiation (SW_IN_F/.._MDS) and air temperature (TA_F/.._MDS) with the gap filled variables being able to better predict GPP than their non-gap-filled counterparts. Apart From these top 5 predicting variables, all other variables had very low $R^2$ values that indicate very poor predictability of GPP based on these variables.  
 
-```{r results1, warning=FALSE, message=FALSE, echo=FALSE, cache=TRUE}
+```{r results1, warning=FALSE, message=FALSE, echo=FALSE}
 # present table
 results_1 |>
   select(-R2adj) |>
@@ -193,7 +193,7 @@ results_1 |>
 ```
 
 
-```{r results1plots, warning=FALSE, message=FALSE, fig.height= 12, fig.width= 8, fig.align='center', echo=FALSE, cache=TRUE}
+```{r results1plots, warning=FALSE, message=FALSE, fig.height= 12, fig.width= 8, fig.align='center', echo=FALSE}
 # display plots
 grid.arrange(grobs = plots_1, ncol = 3, nrow = 5)
 ```
