@@ -615,91 +615,192 @@ library(dplyr); library(lubridate); library(tidyr); library(readr);library(kable
 data &lt;- read_csv(&quot;../data/groenigen_DBS1.csv&quot;, locale = locale(encoding = &quot;UTF-8&quot;))[,1:11]|&gt;
   mutate(Sample_date = dmy(Sample_date))  # convert date column to date class</code></pre>
 <p><br></p>
-<table>
-<caption>Table 1: Data overview without the columns “Descriptions” and
-“Value treatment”.</caption>
-<colgroup>
-<col width="21%" />
-<col width="24%" />
-<col width="5%" />
-<col width="8%" />
-<col width="4%" />
-<col width="8%" />
-<col width="10%" />
-<col width="7%" />
-<col width="8%" />
-</colgroup>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-x: scroll; width:100%; ">
+<table class="table" style="color: black; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Table 1: Data overview without the columns “Descriptions” and “Value
+treatment”.
+</caption>
 <thead>
-<tr class="header">
-<th align="left">Experiment</th>
-<th align="left">Citation</th>
-<th align="center">Depth</th>
-<th align="left">Date</th>
-<th align="center">Time</th>
-<th align="center">AmbientCO2</th>
-<th align="center">IncreasedCO2</th>
-<th align="center">nAmbient</th>
-<th align="center">nIncreased</th>
+<tr>
+<th style="text-align:left;">
+Experiment
+</th>
+<th style="text-align:left;">
+Citation
+</th>
+<th style="text-align:center;">
+Depth
+</th>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:center;">
+Time
+</th>
+<th style="text-align:center;">
+AmbientCO2
+</th>
+<th style="text-align:center;">
+IncreasedCO2
+</th>
+<th style="text-align:center;">
+nAmbient
+</th>
+<th style="text-align:center;">
+nIncreased
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="left">ArizonaFACE - wheat - high N</td>
-<td align="left">Leavitt et al. 2001</td>
-<td align="center">15</td>
-<td align="left">1995-11-01</td>
-<td align="center">0.0</td>
-<td align="center">1344</td>
-<td align="center">1228</td>
-<td align="center">4</td>
-<td align="center">4</td>
+<tr>
+<td style="text-align:left;">
+ArizonaFACE - wheat - high N
+</td>
+<td style="text-align:left;">
+Leavitt et al. 2001
+</td>
+<td style="text-align:center;">
+15
+</td>
+<td style="text-align:left;">
+1995-11-01
+</td>
+<td style="text-align:center;">
+0.0
+</td>
+<td style="text-align:center;">
+1344
+</td>
+<td style="text-align:center;">
+1228
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+4
+</td>
 </tr>
-<tr class="even">
-<td align="left">ArizonaFACE - wheat - high N</td>
-<td align="left">Leavitt et al. 2001</td>
-<td align="center">15</td>
-<td align="left">1996-05-01</td>
-<td align="center">0.5</td>
-<td align="center">1363</td>
-<td align="center">1305</td>
-<td align="center">4</td>
-<td align="center">4</td>
+<tr>
+<td style="text-align:left;">
+ArizonaFACE - wheat - high N
+</td>
+<td style="text-align:left;">
+Leavitt et al. 2001
+</td>
+<td style="text-align:center;">
+15
+</td>
+<td style="text-align:left;">
+1996-05-01
+</td>
+<td style="text-align:center;">
+0.5
+</td>
+<td style="text-align:center;">
+1363
+</td>
+<td style="text-align:center;">
+1305
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+4
+</td>
 </tr>
-<tr class="odd">
-<td align="left">ArizonaFACE - wheat - high N</td>
-<td align="left">Leavitt et al. 2001</td>
-<td align="center">15</td>
-<td align="left">1996-12-01</td>
-<td align="center">1.0</td>
-<td align="center">1254</td>
-<td align="center">1264</td>
-<td align="center">4</td>
-<td align="center">4</td>
+<tr>
+<td style="text-align:left;">
+ArizonaFACE - wheat - high N
+</td>
+<td style="text-align:left;">
+Leavitt et al. 2001
+</td>
+<td style="text-align:center;">
+15
+</td>
+<td style="text-align:left;">
+1996-12-01
+</td>
+<td style="text-align:center;">
+1.0
+</td>
+<td style="text-align:center;">
+1254
+</td>
+<td style="text-align:center;">
+1264
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+4
+</td>
 </tr>
-<tr class="even">
-<td align="left">ArizonaFACE - wheat - high N</td>
-<td align="left">Leavitt et al. 2001</td>
-<td align="center">15</td>
-<td align="left">1997-05-01</td>
-<td align="center">1.5</td>
-<td align="center">1258</td>
-<td align="center">1400</td>
-<td align="center">4</td>
-<td align="center">4</td>
+<tr>
+<td style="text-align:left;">
+ArizonaFACE - wheat - high N
+</td>
+<td style="text-align:left;">
+Leavitt et al. 2001
+</td>
+<td style="text-align:center;">
+15
+</td>
+<td style="text-align:left;">
+1997-05-01
+</td>
+<td style="text-align:center;">
+1.5
+</td>
+<td style="text-align:center;">
+1258
+</td>
+<td style="text-align:center;">
+1400
+</td>
+<td style="text-align:center;">
+4
+</td>
+<td style="text-align:center;">
+4
+</td>
 </tr>
-<tr class="odd">
-<td align="left">Biosphere 2</td>
-<td align="left">Trueman and Gonzalez-Meler 2005</td>
-<td align="center">25</td>
-<td align="left">1999-07-01</td>
-<td align="center">0.0</td>
-<td align="center">5950</td>
-<td align="center">6362</td>
-<td align="center">1</td>
-<td align="center">1</td>
+<tr>
+<td style="text-align:left;">
+Biosphere 2
+</td>
+<td style="text-align:left;">
+Trueman and Gonzalez-Meler 2005
+</td>
+<td style="text-align:center;">
+25
+</td>
+<td style="text-align:left;">
+1999-07-01
+</td>
+<td style="text-align:center;">
+0.0
+</td>
+<td style="text-align:center;">
+5950
+</td>
+<td style="text-align:center;">
+6362
+</td>
+<td style="text-align:center;">
+1
+</td>
+<td style="text-align:center;">
+1
+</td>
 </tr>
 </tbody>
 </table>
+</div>
 <div id="introduction" class="section level3">
 <h3>1. Introduction</h3>
 <p>In the era of climate change, it is vital to understand the effects

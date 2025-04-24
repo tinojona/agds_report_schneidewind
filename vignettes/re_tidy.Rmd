@@ -40,7 +40,9 @@ data <- read_csv("../data/groenigen_DBS1.csv", locale = locale(encoding = "UTF-8
 knitr::kable(data[1:5,1:9], 
              col.names = c("Experiment","Citation","Depth","Date","Time","AmbientCO2","IncreasedCO2", "nAmbient", "nIncreased"),
              caption = "Table 1: Data overview without the columns \"Descriptions\" and \"Value treatment\".", 
-             align = c("l","l","c","l",rep("c",5)))
+             align = c("l","l","c","l",rep("c",5))) |>
+  kable_styling(full_width = FALSE, position = "center") |>
+  scroll_box(width = "100%")
 ```
 
 ### 1. Introduction
