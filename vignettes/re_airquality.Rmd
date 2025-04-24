@@ -12,14 +12,14 @@ rm(list = ls())
 
 ## Telling a story from data
 
-The objective of this report exercise is to practice visualizing data and using statistical metrics to tell a story from data. For this purpose I investigate the [*airquality*](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality) data set with ozone as the target variable which is publicly available and consists of daily measurements of environmental variables from May first to September 30th 1973 in New York (Table 1).
+The objective of this report exercise is to practice visualizing data and using statistical metrics to tell a story from data. For this purpose I investigated the [*airquality*](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality) data set with ozone as the target variable, which is publicly available and consists of daily measurements of environmental variables from May first to September 30th 1973 in New York (Table 1).
 
 ```{r data, message=FALSE, warning=FALSE}
 # load libraries
 library(dplyr); library(lubridate); library(tidyr); library(readr);library(cowplot)
 library(kableExtra);library(ggplot2);library(slider);library(gridExtra)
 
-# read data (saved locally)
+# read data
 airquality <- read_csv("../data/airquality.csv") |>
   
   mutate(
@@ -43,7 +43,7 @@ table_data = data.frame(Variable = c("Ozone", "Solar radiation", "Wind speed", "
 
 
 knitr::kable(table_data, 
-             caption = "Table 1: Variables of the dataset airquality.", 
+             caption = "Table 1: Variables of the airquality dataset.", 
              align =rep("l", 4)) |>
   kable_styling(full_width = FALSE, position = "center") |>
   scroll_box(width = "100%")
@@ -52,18 +52,19 @@ knitr::kable(table_data,
 <br>
 
 ### 1. Introduction
-Ground level ozone is a threat to human health and leads to higher mortality and hospitalization rates $^1$.  Ozone can form when pollutants from traffic or industry like nitrous oxide react with solar radiation $^{2,3}$. Therefore, ozone is highly abundant in populated and polluted urban areas like New York. The degree of the exposure to ozone and their health consequences depend on the ozone concentration and the timely distribution and variation of ozone. In order to decrease the potential health effect of dangerous ozone exposure, ozone must be measured or sufficiently predicted from other more common meteorological variables. In this report exercise, I will investigate the seasonal and weekly patterns of ozone concentrations and determine possible predictors like wind speed, solar shortwave radiation and temperature of dangerous ozone exposure. I hypothesize that ozone concentrations are higher in the summer due increased solar radiation and during the week due to increased traffic and industry activity. Furthermore, ozone should be best predicted by solar radiation as it is integral to its formation. 
+Ground level ozone is a threat to human health and leads to higher mortality and hospitalization rates $^1$.  Ozone can form when pollutants from traffic or industry, like nitrous oxide, react with solar radiation $^{2,3}$. Therefore, ozone is highly abundant in populated and polluted urban areas like New York. The degree of the exposure to ozone and their health consequences depend on the ozone concentration, its timely distribution, and the variation of ozone. In order to decrease the potential health effects of dangerous ozone exposure, ozone must be monitored or sufficiently predicted from other more common meteorological variables. In this report exercise, I will investigate the seasonal and weekly patterns of ozone concentrations and determine possible single predictors of ozone concentration like wind speed, solar shortwave radiation, and temperature. I hypothesize that ozone concentrations are higher in the summer due to increased solar radiation and from Monday to Friday due to increased traffic and industry activity. Furthermore, ozone should be best predicted by solar radiation, as it is integral to its formation. 
 
 <br>
 
 ### 2. Methods
-When investigating the health effects of ozone, a health impacting concentration threshold must be defined. The threshold for dangerous ozone exposure is according to WHO standards 100 $\mu g/m^3$ which corresponds to 51 ppb $^4$. Because I am interested in the exposure to ozone which is most severe in extremes I did not correct for outliers.
+When investigating the health effects of ozone, a health impacting concentration threshold must be defined. The threshold for dangerous ozone exposure is according to WHO standards 100 $\mu g/m^3$ over 8 hours, which corresponds to 51 ppb $^4$. The data was not investigated for outliers in its distribution, due to the extremes being of special interest in an exposure study.
 
 ```{r data thrsh, message=FALSE, warning=FALSE}
 airquality <-  airquality |>
   
   # WHO threshold of 51 ppb
-  mutate(thresh = if_else(Ozone > 51, "Above", "Below")
+  mutate(
+    thresh = if_else(Ozone > 51, "Above", "Below")
          )
 ```
 
@@ -92,8 +93,7 @@ The predictability of ozone using the other environmental variables was determin
 lm_comparison = data.frame(formula = c("Ozone ~ Temp",
                                        "Ozone ~ Wind",
                                        "Ozone ~ Solar.R"),
-                           R2 = rep(NA,3),
-                           R2_adj = rep(NA,3)
+                           R2 = rep(NA,3)
                            )
 
 # loop through model specifications
@@ -104,9 +104,6 @@ for (i in 1:nrow(lm_comparison)) {
   
   # save R2 score
   lm_comparison$R2[i] <- round(summary(mod)$r.squared, digits = 3)
-  
-  # save R2_adj score
-  lm_comparison$R2_adj[i] <- round(summary(mod)$adj.r.squared, digits = 3)
   }
 ```
 
@@ -115,7 +112,7 @@ for (i in 1:nrow(lm_comparison)) {
 ### 3. Results
 #### 3.1 Seasonality of ozone
 
-```{r timeseries, echo=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+```{r timeseries, echo=FALSE, fig.align='center', fig.width=6.5, fig.height=3.5}
 
 ggplot(airquality, aes(x = date)) +
   
@@ -135,12 +132,12 @@ ggplot(airquality, aes(x = date)) +
 
 ```
 <center>
-*Figure 1: Ozone concentration in New York in 1973 relative to the WHO threshold of 551 ppb (dashed line).*
+*Figure 1: Daily ozone concentration in New York in 1973 relative to the WHO threshold of 51 ppb (dashed line).*
 </center>
 
 <br>
 
-Ozone varies greatly from day to day with ozone concentrations ranging from 1 in May to 168 in August ppb with an average daily concentration of 42 ppb and a median concentration of 32 ppb. Higher average concentrations were observed in the summer months (June-August) with on average 55 ppb and lower concentrations in spring (May) with 23 ppb and autumn (September) with 31 ppb (Figure 1). While ozone concentrations were almost exclusively below the WHO threshold of 51 in May and September, they were frequently above this threshold from June to August. However, large fluctuation lead to them being below the threshold from time to time in summer too. 
+Ozone varied greatly from day to day, with ozone concentrations ranging from 1 ppb in May to 168 ppb in August with an average daily concentration of 42 ppb, a median concentration of 32 ppb, and a standard deviation of 33 ppb. Higher average concentrations were observed in the summer months (June-August) with on average 55 ppb which is above the WHO threshold, and lower concentrations in spring (May) with 23 ppb and autumn (September) with 31 ppb (Figure 1). While ozone concentrations were almost exclusively below the WHO threshold of 51 in May and September, they were frequently severely above this threshold from June to August.
 
 <br>
 
@@ -155,7 +152,7 @@ ggplot(airquality_dow, aes(x = Month, y = dow, fill = ozone)) +
   theme_minimal() +
   labs(
     x = "Month",
-    y = "Day of the Week",
+    y = "Day of the week",
     fill = "Ozone",
     title = "",
     subtitle = ""
@@ -169,38 +166,38 @@ ggplot(airquality_dow, aes(x = Month, y = dow, fill = ozone)) +
 
 ```
 <center>
-*Figure 2: Ozone Across Months and Weekdays with respect to the WHO treshold of 51 ppb*
+*Figure 2: Ozone aggregated across months and weekdays with days exceeding 51 ppb indicated by dashed borders.*
 </center>
 
 <br>
-
-Comparing monthly averages, Figure 2 shows that ozone concentrations were highest in July and August with multiple daily averages above the WHO threshold. No other other month showed on any weekday an daily average above the threshold of 51 ppb. Only Friday had consistently across all months decreased ozone concentrations. No other day showed a clear pattern that was visible in all months.
+Figure 2 shows that all days of the week exceeding 51 ppb on average were in July and August, with 5 and 6 days, respectively. In July, the highest average concentrations were measured on Wednesday and in August on Saturday. July and August shared no pattern in exceeding 51 ppb of ozone. Taking all other months into account, weekdays and weekends were not consistent in their differences, with May showing higher concentrations during weekdays and June showing higher concentrations over the weekend. Fridays had lower ozone concentrations compared to all other weekdays across all months.
 
 <br>
+
 #### 3.2 Prediction of Ozone
  
-The Analysis of the different linear model options of ozone has shown that temperature is the single best predictor of ozone concentrations followed by wind speed and solar radiation. Adding the effect of wind speed and solar radiation increased the linear model accuracy. The best performing linear model included all three predictors. But all of the model specifications are limited in properly modeling ozone as all models have an adjusted R-squared below 0.6.
+From the three single predictors, temperatures linear model performed best at predicting ozone with an $R^2$ of 0.488 which indicates that roughly 50% of the variation of ozone can be modeled with just temperature. The linear models of wind speed and solar radiation performed worse and were only poorly able to predict ozone concentrations (Table 2).
 
 <br>
 
 ```{r table lm, echo=FALSE}
 knitr::kable(lm_comparison, 
-             col.names = c("Linear model formula","R2","adjusted R2"),
-             caption = "Table 1: Fit of the different linear model specifications.", 
-             align = c("l","c","c")) |>
+             col.names = c("Linear model formula","R2"),
+             caption = "Table 2: Fit of the different linear model specifications.", 
+             align = c("l","c")) |>
   kable_styling(full_width = FALSE)
 
 ```
  
-The linear association of temperature, the best single predictor, and ozone is displayed in Figure 3. With an adjusted R-squared of 0.483, this model does not properly capture the relationship between ozone and temperature. More fitting could be a non-linear model that better captures the steep rise in ozone concentrations starting at approximately 27 °C.
 
+Comparing the linear models visually, the temperature-ozone association indicates a non-linear relationship and shows increasing ozone concentrations with increasing temperature. There is a steep incline in ozone concentration at high temperatures where the model underestimates ozone concentrations (Figure 3). Wind speed as a predictor had an inverse association with ozone, as the highest concentrations occurred in low wind speed conditions. Wind speeds model also had wider confidence intervals than the temperature model, which again indicates poorer predictability. There is no clear visual pattern between ozone and solar radiation, supporting the very poor predictability of ozone shown in Table 2.
 
 ```{r lm plot, echo = FALSE, fig.align='center', fig.width=8, fig.height=5}
 
 plot1 <- ggplot(airquality, aes(x = Temp, y = Ozone)) +
-  geom_point(aes(color = thresh ), size = 1.2)+
-  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
-  geom_smooth(formula = y ~ x + 0, method = "lm", se = FALSE, color = "black") + 
+  geom_point(aes(color = thresh), size = 1.2 )+
+  scale_color_manual(values = c("Above" = "red2", "Below" = "gold"), drop = TRUE, na.translate = FALSE) +
+  geom_smooth(formula = y ~ x, method = "lm", se = TRUE, color = "black", linetype = 1, size = 0.8) + 
   
   labs(
     x = "Temperature [°C]",
@@ -211,17 +208,18 @@ plot1 <- ggplot(airquality, aes(x = Temp, y = Ozone)) +
   ) +
   theme_classic() +
   theme(legend.position = "none") +
+  ylim(c(0,150)) +
 
-  annotate("text", x = 16, y = 150, label = "(a)", size = 4, color = "black") 
+  annotate("text", x = 16, y = 150, label = "A", size = 4, color = "black") 
 
 
 plot2 <- ggplot(airquality, aes(x = Wind, y = Ozone)) +
   geom_point(aes(color = thresh ), size = 1.2)+
-  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
-  geom_smooth(formula = y ~ x + 0, method = "lm", se = FALSE, color = "black") + 
+  scale_color_manual(values = c("Above" = "red2", "Below" = "gold"), drop = TRUE, na.translate = FALSE) +
+  geom_smooth(formula = y ~ x, method = "lm", se = T, color = "black", linetype = 1, size = 0.8) + 
   
   labs(
-    x = "Wind Speed [mph]",
+    x = "Wind speed [mph]",
     y = "",
     title = "",
     subtitle = "",
@@ -229,18 +227,18 @@ plot2 <- ggplot(airquality, aes(x = Wind, y = Ozone)) +
   ) +
   theme_classic() +
   theme(legend.position = "none") +
-
-  annotate("text", x = 5, y = 150, label = "(b)", size = 4, color = "black") 
+  ylim(c(0,150))+
+  annotate("text", x = 4, y = 150, label = "B", size = 4, color = "black") 
 
 
 
 plot3 <- ggplot(airquality, aes(x = Solar.R, y = Ozone)) +
   geom_point(aes(color = thresh ), size = 1.2)+
-  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
-  geom_smooth(formula = y ~ x + 0, method = "lm", se = FALSE, color = "black") + 
+  scale_color_manual(values = c("Above" = "red2", "Below" = "gold"), drop = TRUE, na.translate = FALSE) +
+  geom_smooth(formula = y ~ x, method = "lm", se = T, color = "black", linetype = 1, size = 0.8) + 
   
   labs(
-    x = "Solar Radiation [lang]",
+    x = "Solar radiation [lang]",
     y = "",
     title = "",
     subtitle = "",
@@ -248,16 +246,15 @@ plot3 <- ggplot(airquality, aes(x = Solar.R, y = Ozone)) +
   ) +
   theme_classic() +
   theme(legend.position = "none") +
-
-  annotate("text", x = 90, y = 150, label = "(c)", size = 4, color = "black")
+  ylim(c(0,150))+
+  annotate("text", x = 40, y = 150, label = "C", size = 4, color = "black")
 
 
 
 
 legend_plot <- ggplot(airquality, aes(x = Temp, y = Ozone)) +
   geom_point(aes(color = thresh ), size = 1.2)+
-  scale_color_manual(values = c("Above" = "red", "Below" = "skyblue3"), drop = TRUE, na.translate = FALSE) +
-  # geom_smooth(formula = y ~ x + 0, method = "lm", se = FALSE, color = "black") + 
+  scale_color_manual(values = c("Above" = "red2", "Below" = "gold"), drop = TRUE, na.translate = FALSE) +
   
   labs(
     color = "Threshold"
@@ -267,17 +264,16 @@ plot4 <- get_legend(legend_plot)
 
 grid.arrange(plot1, plot2, plot3, plot4, ncol = 4, padding = unit(0, "lines"))
 ```
-
-*Figure 3*
-
+<center>
+*Figure 3: Scatterplots of temperature, wind speed, and solar radiation as predictors of ozone and their linear models as dashed lines.*
+</center>
  
 <br>
 
 ### 4. Discussion
 
 
-I hypothesized that ozone concentrations should by higher in summer due to increased solar radiation and I found a clear seasonal pattern with highest concentrations in the summer months. However, I did not find the expected increased ozone concentration on weekdays, possibly due to other processes being involved in ozones production than traffic and industry activity. Against expectations, solar radiation predicted ozone worse than wind speed and temperature, possibly because chemical reactions rely more on temperature and wind speed better accounting for a dilution of polluted air.
-In conclusion, New York's population in 1973 was heavily exposed to dangerous ozone concentrations in the summer months by today's standards. 
+I hypothesized that ozone concentrations should be higher in the summer due to increased solar radiation, and I found a clear seasonal pattern with the highest concentrations in the summer months. However, I did not find the expected increased ozone concentration on weekdays, possibly due to other processes being involved in ozone production and decay than traffic and industry activity. Against expectations, solar radiation predicted ozone worse than wind speed and temperature, possibly because chemical reactions rely more on temperature and wind speed better accounting for a dilution of polluted air. Temperature performed best at predicting ozone concentrations but was not sufficiently accurate to serve as a sole predictor in health monitoring programs. In conclusion, New York's population in 1973 was heavily exposed to dangerous ozone concentrations in the summer months, which often coincided with high temperatures. 
 
 <br>
 
