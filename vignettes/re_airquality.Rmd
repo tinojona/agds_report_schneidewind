@@ -13,7 +13,7 @@ rm(list = ls())
 ## Telling a story from data
 
 
-### Notes
+### Notes (delete?)
 - At least three statistical metrics from your dataset that aid you in answering your question (e.g., mean values, ranges, etc.).
 - At least three publishable figures or tables that show important relationships that aid you in answering your question (e.g., outliers, temporal patterns, scatterplots, etc.).
 - Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?Make sure to interpret and discuss your results and hypotheses. Why were you right / why were you wrong?
