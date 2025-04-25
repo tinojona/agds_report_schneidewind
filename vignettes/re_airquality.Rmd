@@ -16,8 +16,7 @@ The objective of this report exercise is to practice visualizing data and using 
 
 ```{r data, message=FALSE, warning=FALSE}
 # load libraries
-library(dplyr); library(lubridate); library(tidyr); library(readr);library(cowplot)
-library(kableExtra);library(ggplot2);library(slider);library(gridExtra)
+library(lubridate);library(cowplot);library(kableExtra);library(slider);library(gridExtra);library(tidyverse)
 
 # read data
 airquality <- read_csv("../data/airquality.csv") |>

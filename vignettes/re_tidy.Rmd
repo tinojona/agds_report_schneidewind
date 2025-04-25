@@ -27,7 +27,7 @@ The data is taken from *Groenigen, Kees Jan van, Xuan Qi, Craig W. Osenberg, Yiq
 
 ```{r preamble, message=FALSE, warning=FALSE}
 # load libraries
-library(dplyr); library(lubridate); library(tidyr); library(readr);library(kableExtra);library(ggplot2)
+library(lubridate);library(kableExtra);library(tidyverse)
 
 # load clean data
 data <- read_csv("../data/groenigen_DBS1.csv", locale = locale(encoding = "UTF-8"))[,1:11]|>
