@@ -18,15 +18,15 @@ rm(list = ls())
 
 The objective of this report exercise is to understand and explain the differences between linear regression and K-nearest neighbours models
 
-### 1. Adopt the code from [Chapter 10](https://geco-bern.github.io/agds_book/supervised_ml_I.html) from the AGDS1 book
+### 1. Code from [Chapter 10](https://geco-bern.github.io/agds_book/supervised_ml_I.html) from the AGDS1 book
 
 ```{r libraries, message=FALSE, warning=FALSE}
 # load libraries
-library(dplyr);library(tidyverse);library(caret);library(recipes);library(yardstick);library(gridExtra)
+library(dplyr);library(tidyverse);library(caret);library(recipes);library(yardstick);library(gridExtra);library(scales)
 ```
 
 
-```{r readdata, message=FALSE, warning=FALSE, cache=TRUE}
+```{r readdata, message=FALSE, warning=FALSE}
 # data 
 daily_fluxes <- read_csv("../data/daily_fluxes_re_ml_01.csv") |>
   select(TIMESTAMP,
@@ -70,38 +70,46 @@ mod_knn <- caret::train(
   metric = "RMSE"
 )
 
-# load model eval and pred function
+# load model eval, pred and MAE functions
 source("../functions/eval_model.R")
 ```
 
 
-```{r evalplot, message=FALSE, warning=FALSE, fig.align='center', fig.height=3, fig.width=6, cache=TRUE}
-
+```{r evalplot, message=FALSE, warning=FALSE, fig.align='center', fig.height=3, fig.width=6}
 # linear regression model
 eval_model(mod = mod_lm, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
-
-# KNN
-eval_model(mod = mod_knn, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
 ```
-*Figure 111: not centered*
+<center>
+*Figure 1: Model fit of GPP of the linear regression on the training and testing data set.*
+</center>
 
 <br>
 
-### 2. Interpret the differences with respect to the bias-variance trade-off
+```{r evalplot2, message=FALSE, warning=FALSE, fig.align='center', fig.height=3, fig.width=6}
+# KNN
+eval_model(mod = mod_knn, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
+```
+<center>
+*Figure 2: Model fit of GPP of the KNN model on the training and testing data set.*
+</center>
+
+<br>
+
+### 2. Bias-variance trade-off differences
 
 #### Q1: Why is the difference between the evaluation on the training and the test set larger for the KNN model than for the linear regression model?
 
 The difference in evaluation between the training and test sets is larger for the KNN model than for the linear regression model due to differences in their bias-variance tradeoff.
 
 KNN models have low bias (few assumptions about relationships in the data) but high variance, making them prone to overfitting. This means they capture noise in the training data, leading to strong performance on the training set but weaker generalization to new data, as seen in the lower test set accuracy. The fact that the KNN model performs slightly worse on the test set suggests it may be overfitting. A possible solution is to increase 
-𝐾(currently set to 8) to smooth predictions and reduce variance.
+𝐾 (currently set to 8) to smooth predictions and reduce variance.
 
 In contrast, linear models have higher bias and lower variance, meaning they learn a simpler, more generalizable relationship between predictors and the outcome. This makes them more robust to unseen data, which could explain why the linear model performs better on the test set than on the training set.
 
 
 #### Q2: Why does the evaluation on the test set indicate a better model performance of the KNN model than the linear regression model?
 
-The KNN model demonstrates better performance on the test set than the linear regression model, as indicated by its higher $R^2$ and lower RMSE and is, in other words, better able to predict the a larger portion variance of GPP.
+The KNN model demonstrates better performance on the test set than the linear regression model, as indicated by its higher $R^2$ and lower RMSE and is, in other words, better able to predict a larger portion of the variance of GPP in a dataset that was not used for training.
 
 
 #### Q3: How would you position the KNN and the linear regression model along the spectrum of the bias-variance trade-off?
@@ -110,7 +118,7 @@ KNN and linear regression fall on opposite ends of the bias-variance trade-off. 
 
 <br>
 
-### 3. Visualise temporal variations of observed and modelled GPP for both models, covering all available dates.
+### 3. Temporal variations of modelled GPP
 
 ```{r datamerg}
 # linear regression model
@@ -131,55 +139,118 @@ daily_fluxes$knn_fitted <- pred_model(mod = mod_knn,
 # Plot with Linear Model
 plot_lm <- daily_fluxes |> 
   ggplot(aes(x = TIMESTAMP)) +
-  geom_point(aes(y = GPP_NT_VUT_REF, color = "Observation"), size = 0.65) +
-  geom_point(aes(y = lm_fitted, color = "Linear Model"), size = 0.65) +
+  geom_point(aes(y = GPP_NT_VUT_REF, color = "Observation"), size = 0.6) +
+  geom_point(aes(y = lm_fitted, color = "Linear Model"), size = 0.6) +
   scale_color_manual(values = c("Observation" = "black", 
                                 "Linear Model" = "brown1")) +
-  labs(x = "Time", y = "Fitted GPP", color = "Origin") +
+  labs(x = "Time", y = "Fitted GPP", color = "Data") +
   theme_minimal()
 
 # Plot with KNN Model
 plot_knn <- daily_fluxes |> 
   ggplot(aes(x = TIMESTAMP)) +
-  geom_point(aes(y = GPP_NT_VUT_REF, color = "Observation"), size = 0.65) +
-  geom_point(aes(y = knn_fitted, color = "KNN model"), size = 0.65) +
+  geom_point(aes(y = GPP_NT_VUT_REF, color = "Observation"), size = 0.6) +
+  geom_point(aes(y = knn_fitted, color = "KNN model"), size = 0.6) +
   scale_color_manual(values = c("Observation" = "black", 
                                 "KNN model" = "skyblue2")) +
-  labs(x = "Time", y = "Fitted GPP", color = "Origin") +
+  labs(x = "Time", y = "Fitted GPP", color = "Data") +
   theme_minimal()
 
 # Arrange plots vertically
 grid.arrange(plot_lm, plot_knn, ncol = 1)
 ```
-*Figure X not centered*
+<center>
+*Figure 3: Time series plots of comparing the linear model predictions (top) and the KNN model predictions (bottom) of GPP with observations.*
+</center>
+
+<br>
+
+Figure 3 shows the temporal variation of observed GPP and the corresponding predictions from the linear regression and the KNN model. It is hard to compare model performance from this comparison but what is clearly visible is that both model struggle to capture the extremes of very low and very high GPP. This could be explained by the decreased training data on these extremes.
+
 
 <br>
 
 ## The role of k
 
-### How would the $R^2$ and the MAE on the test and training sets change for k approaching 1 and for k $N$ (the number of observations)?
+### 1. Implications of k approaching 1 and k approaching the number of observations $N$
 
 With k approaching 1, the model will more and more perfectly fit the data, which makes it very sensitive to noise. As a consequence, in the training data, the MAE would decrease and approach 0 while the $R^2$ would increase and approach 1. The opposite would be the case in the test data, where the MAE would increase due to overfitting and the $R^2$ would decrease.
 
-With k approaching $N$, in the training data, MAE would increase since we would be ignoring finer patterns and the $R^2$ would approach 0 as the model essentially predicts the overall mean. In the test data, the $R^2$ would stay low due to underfitting and and the MAE would increase as the model becomes too simplistic.
+With k approaching $N$, in the training data, MAE would increase since we would be ignoring finer patterns, and the $R^2$ would approach 0 as the model essentially predicts the overall mean at $N$ k's. In the test data, the $R^2$ would stay low due to underfitting and the MAE would slow down to decrease as the model becomes too simplistic.
 
 
-### Write code to test your hypothesis of the influence of different k's and visualize them
+### 2. Visualization of the implications
 
-
-
-```{r lol, warning=FALSE, message=FALSE, fig.align='center', fig.height=3.5, fig.width=6.5}
-source("../functions/eval_model.R")
-
-# k's to compute MAE for
-k_vec <- c(1:15,seq(20,100,10), seq(150,300,50), 500, 750, 1250)
+```{r MAE_plot, warning=FALSE, message=FALSE, fig.align='center', fig.height=3.5, fig.width=6.5}
+# k's to compute MAE for with large k's
+k_vec <- c(1:15,seq(20,100,10), seq(150,300,50), 500, 750, 1200)
            
 # MAE plot function
-MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
+plot_high = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) +
+  labs(y = "", x = "k")
+
+# k's to compute MAE for with higher resolution of small k's
+k_vec <- 1:50
+           
+# MAE plot function
+plot_low = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) + 
+  theme(legend.position = "none") +
+  labs(x = "k")
+```
+```{r MAE_plot2, echo = FALSE, fig.width=10, fig.height=4, fig.align='center'}
+
+grid.arrange(plot_low, plot_high, ncol = 2, widths = c(3, 7))
+```
+<center>
+*Figure 4: Relationship between k of the KNN model with the MAE in training and test data sets.*
+</center>
+
+<br>
+
+Figure 4 shows the relationship between k and the MAE across a range of values. As hypothesized, when k approaches 1, the MAE decreases toward 0 in the training data, but increases in the test data, indicating overfitting and poor generalizability. As k approaches N, the MAE in the training data increases, but only slightly beyond a certain threshold. Similarly, the MAE in the test data decreases as k increases, but the improvements diminish past that same threshold.
+
+The initial sharp decrease in test MAE as k increases from 1 reflects a region of overfitting, where small increases in k greatly improve generalizability. The region where increasing k no longer significantly improves test performance indicates underfitting, where the model becomes overly simplistic and fails to capture meaningful patterns in the data.
+
+### 3. Determination of the optimal k
+
+An optimal k could be found in the transition between these two regions, where the model achieves a good balance between bias and variance, minimizing test MAE without overfitting. Just taking the lowest MAE on the test set would likely lead to an underfit model being chosen. Visually, this would be approximately 10, as there is an "elbow bend", which indicates a distinct decrease in performance gain with further k addition. This "elbow bend" can also be determined using the Kneedle algorithm, which draws a line between the first and last points on the curve of k versus MAE and then determines the point on the curve, which has the largest perpendicular distance to the line. To determine this optimal k, I use values for k between 1 and 50:
+
+```{r kneedle, warning=FALSE}
+# k values
+k_vec <- 1:50
+
+# MAE table function
+MAE_df = MAE_table(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
+
+# normalize
+x_norm <- rescale(MAE_df$k)
+y_norm <- rescale(MAE_df$MAE_test)
+
+# define endpoints
+point1 <- c(x_norm[1], y_norm[1])
+point2 <- c(x_norm[length(x_norm)], y_norm[length(y_norm)])
+
+# compute distance to line
+dist_to_line <- sapply(1:length(x_norm), function(i) {
+  num <- abs((point2[2] - point1[2]) * x_norm[i] - 
+             (point2[1] - point1[1]) * y_norm[i] + 
+             point2[1] * point1[2] - point2[2] * point1[1])
+  
+  denom <- sqrt((point2[2] - point1[2])^2 + (point2[1] - point1[1])^2)
+  
+  num / denom
+})
+
+MAE_df$k[which.max(dist_to_line)]
 ```
 
 
+Another method to determine the optimal value for k is using the rule of thumb: taking the square root of the number of observations in the training data set and dividing them by two:
 
-### Determine the optimal k
+```{r sqrtn}
+sqrt(nrow(daily_fluxes_train)) / 2
+```
 
+However, this methods yields a significantly higher best estimate for k of 34 which in my opinion is quite past the beginning of the plateau where an increase in k decreases MAE only very slightly. Therefore, a better estimate of k was determined visually and using the Kneedle algorithm and is approximately 10, which would agree with my suggestion derived from Figure 1 and 2 that their k of 8 should be increased. Another method to determine an optimal k would be cross-validation, which is not implemented here.
 
+<br>
