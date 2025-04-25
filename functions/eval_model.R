@@ -161,4 +161,57 @@ MAE_plot <- function(vec,df_train, df_test){
 
 
 
+# MAE table function
+MAE_table <- function(vec,df_train, df_test){
+
+  # empty df
+  MAE_df <- data.frame()
+
+  for(i in 1:length(vec)){
+
+    k_def = vec[i]
+
+    # define the model with different k's
+    mod_knn <- caret::train(
+      pp,
+      data = df_train |> drop_na(),
+      method = "knn",
+      trControl = caret::trainControl(method = "none"),
+      tuneGrid = data.frame(k = i),
+      metric = "RMSE",
+      preProcess = NULL
+    )
+
+    # add predictions to the data frames
+    df_train_new <- df_train |>
+      drop_na()
+    df_train_new$fitted <- predict(mod_knn, newdata = df_train_new)
+
+    df_test_new <- df_test |>
+      drop_na()
+    df_test_new$fitted <- predict(mod_knn, newdata = df_test_new)
+
+    # get metrics tables
+    metrics_train <- df_train_new |>
+      yardstick::metrics(GPP_NT_VUT_REF, fitted)
+
+    metrics_test <- df_test_new |>
+      yardstick::metrics(GPP_NT_VUT_REF, fitted)
+
+    # extract MAE values from metrics tables
+    MAE_train <- metrics_train |>
+      filter(.metric == "mae") |>
+      pull(.estimate)
+
+    MAE_test <- metrics_test |>
+      filter(.metric == "mae") |>
+      pull(.estimate)
+
+    MAE_df <- rbind(MAE_df, data.frame(k = vec[i], MAE_train = MAE_train, MAE_test = MAE_test))
+
+  }
+
+  return(MAE_df)
+}
+
 
