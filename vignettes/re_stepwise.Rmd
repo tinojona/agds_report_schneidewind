@@ -1,5 +1,5 @@
 ---
-title: "9 Regression and Classification - Report Exerise"
+title: "Session 9 Regression and Classification - Report Exerise"
 author: "Tino Schneidewind"
 date: "`r Sys.Date()`"
 output: html_document
@@ -10,51 +10,23 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls())
 ```
 
-## Background
-The objective of this report exercise is to display a stepwise forward regression modeling Gross Primary Production (GPP) as a function of all predictors available in the half-hourly ecosystem flux [dataset](https://raw.githubusercontent.com/geco-bern/agds_book/refs/heads/main/book/data/df_for_stepwise_regression.csv).
+## Stepwise forward regression
+The objective of this report exercise is to display a stepwise forward regression modeling Gross Primary Production (GPP) as a function of all predictors available in the half-hourly ecosystem flux [dataset](https://raw.githubusercontent.com/geco-bern/agds_book/refs/heads/main/book/data/df_for_stepwise_regression.csv) (Table 1). For further information, see the [FLUXNET website](https://fluxnet.org/data/fluxnet2015-dataset/).
 
 
 ```{r readdata, message=FALSE, warning=FALSE}
-# libraries
-library(tidyverse)   # dplyr, ggplot, purr
-library(rlang)       # formula
-library(gridExtra)   # plotting
-library(knitr)       # tables
-library(kableExtra)  # nice tables
+# load libraries
+library(tidyverse);library(rlang);library(gridExtra);library(knitr);library(kableExtra);library(dplyr)
 
-
-# data 
+# load data 
 half_hourly_fluxes <- readr::read_csv("../data/df_for_stepwise_regression.csv")|>
-  dplyr::select(-starts_with("TIMESTAMP"))  |>    # exclude time series
-  dplyr::mutate(siteid = as.factor(siteid)) |>    # SiteID as factor
-  tidyr::drop_na()                                # remove incomplete rows
-
+  select(-starts_with("TIMESTAMP"))  |>    # exclude time series
+  mutate(siteid = as.factor(siteid)) |>    # SiteID as factor
+  drop_na()                                # remove incomplete rows
 
 # for reproducability
 set.seed(1111999)
 ```
-
-## Introduction
-Gross Primary Production (GPP; variable: GPP_NT_VUT_REF) refers to the total amount of organic carbon assimilated by vegetation through photosynthesis. GPP is a key component in understanding ecosystem productivity and carbon cycling, both of which are particularly important in the context of climate change.
-
-GPP is influenced by environmental conditions such as light availability (intensity, duration, seasonality), temperature (which affects enzyme activity), and water availability (impacting photosynthesis and stomatal openings during drought). It is also influenced by biotic factors like plant species (leaf area), succession (growth periods), and interactions with herbivores or disease (which can decrease biomass).
-
-To accurately model GPP, it is crucial to understand its predictors. The following research questions guide my investigation:
-
-1. What is the best single linear predictor of GPP, based on $R^2$ and AIC?
-2. How can GPP be predicted most effectively using all available variables in a linear model, based on $R^2$ and AIC?
-
-
-## Methods
-To assess how GPP can be best modeled using a combination of all possible predictors I performed a stepwise forward regression, as this is a very computationally efficient, following these steps:
-
-1. Set the number of predictors to be considered to $p = 1$.
-2. Fit all regression models with $p$ predictors and compute their $R^2$.
-3. Select the model with $p$ predictors that achieves the highest $R^2$ (best fitting model) and compute its Akaiken information criterion score (AIC).
-4. Fit all regression models with $p + 1$  predictors that include the predictor selected at the previous step and compute their $R^2$. Select the best fitting model and compute its AIC.
-5. If the AIC of the model with $p + 1$ predictors is poorer than the AIC of the model with $p$ predictors, retain the model with $p$ predictors and quit. Otherwise, continue with with step 4.
-
-In this stepwise forward regression, I accounted for the following variables displayed in Table 1.
 
 ```{r tablevariables, echo=FALSE}
 table_variables <- data.frame(Variable    = c("Name", "Class"), 
@@ -83,22 +55,49 @@ colnames(table_variables) <- c("Description", "Class")
 
 # Now, use kable to display the table with the proper column names
 table_variables[2:nrow(table_variables), ] |>
-  kable(caption = "Table 1: Prediction variables", col.names = c("Variable", "Description", "Class")) |>
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-
-
+  kable(caption = "Table 1: Predictor variables", col.names = c("Variable", "Description", "Class")) |>
+  kable_styling(full_width = FALSE, position = "center")|>
+  scroll_box(width = "100%")
 ```
 
+<br>
 
-Using the following function, I calculated the accuracy ($R^2$, adjusted $R^2$, Akaiken information criterion AIC) of all possible single linear predictors and their combinations of GPP.
+### 1. Introduction
+Gross Primary Production (GPP; variable: GPP_NT_VUT_REF) refers to the total amount of organic carbon assimilated by vegetation through photosynthesis. GPP is a key component in understanding ecosystem productivity and carbon cycling, both of which are particularly important in the context of climate change.
+
+GPP is influenced by environmental conditions such as light availability (intensity, duration, seasonality), temperature (which affects enzyme activity), and water availability (impacting photosynthesis and stomatal openings during drought). It is also influenced by biotic factors like plant species (leaf area), succession (growth periods), and interactions with herbivores or disease (which can decrease biomass).
+
+To accurately model GPP, it is crucial to understand its predictors. The following research questions guide my investigation:
+
+1. What is the best single linear predictor of GPP?
+2. How can GPP be predicted most effectively using all available variables in a linear model?
+
+For both objectives, I will use the $R^2$ and Akaiken information criterion (AIC) as measures of predictive performance.
+
+<br>
+
+### 2. Methods
+To assess how GPP can be best modeled using a combination of all possible predictors I performed a stepwise forward regression, as this is a very computationally efficient, following these steps:
+
+1. Set the number of predictors to $p = 1$.
+2. Fit all regression models with $p$ predictor(s) and compute their $R^2$.
+3. Select the model with $p$ predictor(s) that achieves the highest $R^2$ (best fitting model) and compute its Akaiken information criterion score (AIC).
+4. Fit all regression models with $p + 1$  predictors that includes the predictor(s) selected at the previous step and compute their $R^2$. Select the best fitting model and compute its AIC.
+5. If the AIC of the model with $p + 1$ predictors is poorer than the AIC of the model with $p$ predictor(s), retain the model with $p$ predictor(s) and quit. Otherwise, continue with with step 4.
+
+In this stepwise forward regression, I accounted for all the variables displayed in Table 1.
+
+Using the following function, I calculated the ability of the linear models to predict GPP ability ($R^2$, adjusted $R^2$, AIC).
 
 ```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
 # function to extract model performance
 fit_model <- function(var) {
   
+  # define formula and model
   formula_mod <- as.formula(paste0("GPP_NT_VUT_REF ~ ", var))
   mod         <- lm(formula = formula_mod, data = half_hourly_fluxes)
   
+  # extract predictive performance
   tibble(
     predictor  = var,
     R2         = summary(mod)$r.squared,
@@ -106,17 +105,80 @@ fit_model <- function(var) {
     AIC        = extractAIC(mod)[2]
   )
 }
+```
 
+For research question 1, I determined the predictive performance of GGP of all variables individually.
 
-# variables for bivariate analysis
+```{r exerc1_2, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
+# predictor names for bivariate analysis
 vars      <- colnames(half_hourly_fluxes[c(1:14,16)])
 
 # apply function
 results_1 <- map_dfr(vars, fit_model) |> arrange(desc(R2))
+```
 
+
+
+To implement the stepwise forward regression, I created a for loop based on the previously described steps that only stops when the newest best-performing model is not performing better compared to the one with one less predictor.
+
+```{r stepwise, message=FALSE, warning=FALSE}
+# empty data frame to save model performances
+stepwise <- data.frame(predictor = " ",
+                      R2 = 0,
+                      R2adj = 0,
+                      AIC = Inf)
+
+# if the NEW MODEL (the bottom one because rbind) is NOT THE BEST -> STOP
+while(min(stepwise$AIC) == stepwise$AIC[nrow(stepwise)]){
+  
+  # get individual predictors off all previous models so that 
+  # I can exclude them from future multiple predictor models
+  stepwise_split <- unlist(strsplit(stepwise$predictor, " "))
+  
+  # apply fit_model to the all possible combinations with the previous BEST PERFOMING MODEL
+  results_2      <- map_dfr(paste0(stepwise$predictor[nrow(stepwise)]," + ", setdiff(vars, stepwise_split)),
+                            fit_model)
+  
+  # extract and save the best performing NEW MODEL from results
+  stepwise       <- rbind(stepwise, results_2[results_2$AIC == min(results_2$AIC),])
+}
+```
+
+
+```{r stepwise_cleaning, message=FALSE, warning=FALSE, echo=FALSE}
+# clean up the dataframe
+stepwise <- stepwise |>
+  slice(2:(n() - 1)) |>                                           # remove first (empty) and last (not best) performing model
+  mutate(predictor = substr(predictor, 5, nchar(predictor))) |>   # remove " + " at the start of predictors
+  mutate(index = seq_along(predictor)) |>
+  select(index, everything())
+```
+
+<br>
+
+### 3. Results
+
+#### 3.1. Single linear predictors
+
+From all single linear predictors, photosynthetic photon flux density (PPFD_IN) was the most effective in predicting GPP, with an $R^2$ of 0.363 which indicates a moderate but limited capacity to predict GPP with 63.7% of the variance of GPP remaining unexplained (Table 2). Second and third best in predicting GPP were  incoming shortwave radiation (SW_IN_F and SW_IN_F_MDS) and air temperature (TA_F and TA_F_MDS) with the gap-filled variables being able to better predict GPP than their non-gap-filled counterparts. Apart from these top 5 predicting variables, all other variables had very low $R^2$ values that indicate very poor predictability of GPP based on these variables individually.  
+
+```{r results1, warning=FALSE, message=FALSE, echo=FALSE}
+# present table
+results_1 |>
+  select(-R2adj) |>
+  mutate(index = seq_along(predictor)) |>
+  select(index, everything()) |>
+  kable(caption = "Table 2: Model Performance Metrics", 
+        digits = 3, col.names = c("Index", "Predictor", "R2","AIC"), align = rep("l", 4)) |>
+  kable_styling(full_width = FALSE, position = "center")|>
+  scroll_box(width = "100%")
+```
+
+
+```{r results1plots, warning=FALSE, message=FALSE, fig.height= 7, fig.width= 12, fig.align='center', echo=FALSE}
 # save plots in order of performance
-vars      <- results_1$predictor
-plots_1   <- map2(vars, seq_along(vars), ~ {
+vars_ordered      <- results_1$predictor
+plots_1   <- map2(vars_ordered, seq_along(vars_ordered), ~ {
   
   # is the variable is numeric before applying min()?
   x_vals  <- half_hourly_fluxes[[.x]]
@@ -134,76 +196,22 @@ plots_1   <- map2(vars, seq_along(vars), ~ {
              hjust = -0.5, vjust = 1.5, size = 5, fontface = "bold")
 })
 
-  
-```
-
-
-
-To implement the stepwise forward regression I created a for loop based on the previously described steps that only stops when the newest model was not performing better compared to the previous one.
-
-```{r stepwise, message=FALSE, warning=FALSE}
-# empty data frame for saving of model performances
-stepwise <- data.frame(predictor = " ",
-                      R2 = 0,
-                      R2adj = 0,
-                      AIC = Inf)
-
-
-# if the NEW MODEL (the bottom one because rbind) is NOT THE BEST -> STOP
-while(min(stepwise$AIC) == stepwise$AIC[nrow(stepwise)]){
-  
-  # get individual predictors so that I can exclude them for future multiple predictor models
-  stepwise_split <- unlist(strsplit(stepwise$predictor, 
-                                    " "))
-  
-  # apply the function to the all possible combinations with the previous BEST PERFOMING MODEL
-  results_2      <- map_dfr(
-    paste0(stepwise$predictor[nrow(stepwise)]," + ", setdiff(vars, stepwise_split)),  
-    fit_model)
-  
-  # extract and save the best performing NEW MODEL from results
-  stepwise       <- rbind(stepwise, 
-                          results_2[results_2$AIC == min(results_2$AIC),])
-}
-
-# clean up the dataframe
-stepwise <- stepwise |>
-  slice(2:(n() - 1)) |>                                           # remove first (empty) and last (not best) performing model
-  mutate(predictor = substr(predictor, 5, nchar(predictor))) |>   # remove " + " at the start of predictors
-  mutate(index = seq_along(predictor)) |>
-  select(index, everything())
-```
-
-
-## Results
-
-### Single linear predictors
-
-From all single linear predictors, photosynthetic photon flux density (PPFD_IN) was the most effective in predicting GPP, with an $R^2$ of 0.363 which indicates a moderate but limited capacity to predict GPP with 63.7% of the variance of GPP remaining unexplained (Table 2). Second and third best in predicting GPP were  incoming shortwave radiation (SW_IN_F/.._MDS) and air temperature (TA_F/.._MDS) with the gap filled variables being able to better predict GPP than their non-gap-filled counterparts. Apart From these top 5 predicting variables, all other variables had very low $R^2$ values that indicate very poor predictability of GPP based on these variables.  
-
-```{r results1, warning=FALSE, message=FALSE, echo=FALSE}
-# present table
-results_1 |>
-  select(-R2adj) |>
-  mutate(index = seq_along(predictor)) |>
-  select(index, everything()) |>
-  kable(caption = "Table 2: Model Performance Metrics", 
-        digits = 3, col.names = c("Index", "Predictor", "R2","AIC"), align = rep("l", 4)) |>
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-```
-
-
-```{r results1plots, warning=FALSE, message=FALSE, fig.height= 12, fig.width= 8, fig.align='center', echo=FALSE}
 # display plots
-grid.arrange(grobs = plots_1, ncol = 3, nrow = 5)
+grid.arrange(grobs = plots_1, ncol = 5, nrow = 3)
 ```
-*Figure 1: Scatterplots of all predictors and GPP and their linear association. *1*: PPFD_IN, *2*: SW_IN_MDS, *3*: SW_IN_F, *4*: TA_F_MDS, *5*: TA_F, *6*: VPD_F, *7*: LW_IN_F_MDS, *8*: LW_IN_F, *9*: VPD_F_MDS, *10*: siteid, *11*: CCO2_F_MDS, *12*: WS_F, *13*: P_F, *14*: PA_F, *15*: USTAR.*
+<center>
+*Figure 1: Scatterplots of all predictors and GPP and their linear association. *1*: PPFD_IN, *2*: SW_IN_MDS, *3*: SW_IN_F, *4*: TA_F_MDS,*5*: TA_F, *6*: VPD_F, *7*: LW_IN_F_MDS, *8*: LW_IN_F, *9*: VPD_F_MDS, *10*: siteid, *11*: CCO2_F_MDS, *12*: WS_F, *13*: P_F, *14*: PA_F, *15*: USTAR.*
+</center>
 
-Figure 1 displays scatterplots of all predictors of GPP. A clear positive correlation is observed between GPP and the five best predictors identified in Table 2: PPFD_IN, SW_IN_F/.._MDS, and TA_F/.._MDS. In contrast, the remaining variables show a poor relationship with GPP, as evidenced by the uniform cloud patterns in their scatterplots. Notably, the two variables siteid and PA_F exhibited distinct patterns that reflect the influence of different measurement stations.
+<br>
 
-### Stepwise forward regression
+Figure 1 displays scatterplots of all single predictors of GPP. A clear positive correlation is shown between GPP and the five best predictors identified in Table 2: PPFD_IN, SW_IN_F, SW_IN_F_MDS, TA_F, and TA_F_MDS. In contrast, the remaining variables show a poor relationship with GPP, as evidenced by the uniform cloud patterns in their scatterplots. Notably, the two variables siteid and PA_F exhibited distinct patterns that reflect the influence of different measurement stations.
 
-```{r plotR2, echo=FALSE, fig.align='center', fig.width=5.5, fig.height=4}
+<br>
+
+#### 3.2. Stepwise forward regression
+
+```{r plotR2, echo=FALSE, fig.align='center', fig.width=5, fig.height=3.5}
 
 ggplot(aes(x=index, y= R2adj), data = stepwise) +
   geom_point() +
@@ -214,18 +222,22 @@ ggplot(aes(x=index, y= R2adj), data = stepwise) +
   theme_minimal()
 
 ```
-
+<center>
 *Figure 2: Adjusted R2 scores for the best performing model with a defined number of predictors from the stepwise regression.*
+</center>
 
-The iterative addition of predictors initially increased the capability of GPP prediction (Figure 2). However, after three predictors, the improvement from adding additional predictors decreased. By the time five predictors were added, the increase in adjusted R2 became minimal.
+<br>
 
-Examining the variables selected in the stepwise forward regression in Table 3, we found that PPFD_IN, the previously identified best single predictor, was most effectively improved in predictive capacity by siteid, the only categorical variable in the data set. Additional meaningful improvements in GPP modeling were achieved by successively adding longwave incoming radiation (LW_IN_F) and gap filled vapor pressure deficit (VPD_F_MDS). Interestingly, of the top five single predictors, gap filled air temperature (TA_F_MDS) was only added in the fifth iteration of the stepwise regression. This delayed inclusion suggests a high correlation between TA_F_MDS, the other best performing predictors from Table 2 and PPFD_IN, as all explain similar variation in GPP. 
+Investigating the increased predictive ability based on the number of predictors, the iterative addition of predictors initially increased the capability of GPP prediction (Figure 2). However, after three predictors, the improvement from adding additional predictors decreased. By the time five predictors were added, the increase in adjusted R2 became minimal.
+
+Examining the variables determined in the stepwise forward regression in Table 3, we found that PPFD_IN, the previously identified best single predictor, was most effectively improved in predictive capacity by siteid, the only categorical variable in the data set. Additional meaningful improvements in GPP modeling were achieved by successively adding longwave incoming radiation (LW_IN_F) and gap-filled vapor pressure deficit (VPD_F_MDS). Interestingly, of the top five single predictors, gap-filled air temperature (TA_F_MDS) was only added in the fifth iteration of the stepwise regression. This delayed inclusion suggests a high correlation between TA_F_MDS, the other best-performing predictors from Table 2, and PPFD_IN, as they potentially explain a similar variation of GPP. 
 
 ```{r results2, message=FALSE, warning=FALSE, echo = FALSE}
 # present table
 stepwise |>
-  kable(caption = "Table 3: Stepwise Regression Model Performance Metrics", digits = 4, col.names = c("Index", "Predictor", "R2","R2adj", "AIC"), align = rep("l", 5)) |>
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) |>
+  kable(caption = "Table 3: Stepwise Regression Model Performance Metrics", digits = 4, col.names = c("Index", "Predictor", "R2","R2adj", "AIC"), align = rep("l", 5))  |>
+  kable_styling(full_width = FALSE, position = "center")|>
+  scroll_box(width = "100%") |>
   column_spec(2, width = "5in") |>
   column_spec(1, width = "0.5in") |>
   column_spec(3, width = "1in")|>
@@ -234,40 +246,16 @@ stepwise |>
 
 ```
 
-
-
-```{r scatterplot3predictors, echo=FALSE, fig.align='center', fig.width=8, fig.height=3}
-# mod_best <- lm("GPP_NT_VUT_REF ~ PPFD_IN + siteid + LW_IN_F", data = half_hourly_fluxes)
-#   
-#  
-# broom::tidy(mod_best) |> 
-#   ggplot(aes(x = term, y = estimate, fill = p.value < 0.05)) +  
-#   geom_col() + coord_flip() +  
-#   labs(x = "Predictor Variables",
-#        y = "Regression Coefficient") +
-#   scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "gray"), name = "Significance") +
-#   theme_minimal()
-
-```
-```{r, echo=FALSE}
-
-# 
-# 
-# *Figure 3: The contribution of the 3 predictors (PPFD_IN, siteid, LW_IN_F) in the 3-predictor linear model for GPP.*
-# 
-# From the linear model from the stepwise regression that has only 3 predictors, all of them are significant. While PPFD_IN predicts GPP best on its own, it contributes relatively little to GPP with similar behavior in LW_IN_F. Large contributions were made by the station where the data was measured compared to the reference site of CH-Dav which is included in the intercept. 
-```
+<br>
 
 ## Discussion
 
-The results from this analysis provide valuable insights into the modeling of GPP using a variety of environmental predictors. The evaluation of single predictors demonstrated that photosynthetic photon flux density was the most effective variable for predicting GPP, with a moderate $R^2$ of 0.363. This highlights the importance of light availability in driving photosynthesis and carbon assimilation in vegetation. The gap-filled versions of incoming shortwave radiation and air temperature predicted GPP only slightly worse, demonstrating the dependency of photosynthesis on both and the potential benefit of gap-filling for improving the accuracy of environmental data, especially in data sets with missing values. On the other hand, the remaining variables showed very poor predictive power, suggesting that not all environmental predictors contribute equally to accurate GPP modeling.
+The results from this analysis provide valuable insights into the modeling of GPP using a variety of environmental predictors. The evaluation of single predictors demonstrated that photosynthetic photon flux density was the most effective variable for predicting GPP, with a moderate $R^2$ of 0.363. This highlights the importance of light availability in driving photosynthesis and carbon assimilation in vegetation. The gap-filled versions of incoming shortwave radiation and air temperature predicted GPP only slightly worse, demonstrating the dependency of photosynthesis on both and the potential benefit of gap-filling for improving the accuracy of environmental data, especially in data sets with missing values. On the other hand, the remaining variables showed very poor predictive power, suggesting that not all environmental predictors contribute equally to accurate GPP modeling on their own.
 
-When applying the stepwise forward regression, the iterative addition of predictors initially improved the model’s predictive accuracy, as reflected by the increasing $R^2$. However, after the inclusion of three predictors, the improvement from adding additional variables became smaller, and by the time five predictors were included, the adjusted $R^2$ barely improved. This phenomenon is consistent with the diminishing returns of adding predictors, where each additional variable explains progressively less of the variation in GPP.
+When applying the stepwise forward regression, the iterative addition of predictors initially improved the model’s predictive accuracy, as reflected by the increasing $R^2$. However, after the inclusion of three predictors, the improvement from adding additional variables became smaller, and by the time five predictors were included, the adjusted $R^2$ barely improved with more predictors. This phenomenon is consistent with the diminishing returns of adding predictors, where each additional variable explains progressively less of the variation in GPP.
 
-The choice of variables in the final stepwise model reveals important relationships between predictors. Photosynthetic photon flux density continued to play a central role, and its predictive capacity was further enhanced by the inclusion of the measurement site, which suggests that variability between measurement stations is an important factor influencing GPP. Other predictors such as incoming longwave radiation and vapor pressure deficit contributed meaningfully to the model, improving the overall prediction of GPP. Interestingly, gap filled air temperature was only included in the fifth iteration of the regression, which likely reflects its high correlation with the other variables, particularly photosynthetic photon flux density. The delayed inclusion of gap filled air temperature and other well performing single predictors of GPP reinforces the idea that these predictors share overlapping information and that stepwise selection can help identify the most informative set of variables for modeling GPP.
+The choice of variables in the final stepwise model reveals important relationships between predictors. Photosynthetic photon flux density continued to play a central role, and its predictive capacity was further enhanced by the inclusion of the measurement site, which suggests that variability between measurement stations is an important factor influencing GPP. Other predictors such as incoming longwave radiation and vapor pressure deficit contributed meaningfully to the model, improving the overall prediction of GPP. Interestingly, gap-filled air temperature was only included in the fifth iteration of the regression, which likely reflects its high correlation with the other variables, particularly photosynthetic photon flux density. The delayed inclusion of gap filled air temperature and other well performing single predictors of GPP reinforces the idea that these predictors share overlapping information and that stepwise selection can help identify the most informative set of variables for modeling GPP.
 
-While the stepwise forward regression offers a robust approach to building predictive models, it is important to consider the risks of overfitting. The inclusion of additional predictors, especially when they are correlated, may lead to a model that fits the training data well but performs poorly on new, unseen data. To mitigate overfitting and ensure that the model’s performance is reliable, cross-validation is a useful technique. 
-
-It is also important to note that the models presented here are linear models, which assume a linear relationship between the predictors and the response variable, GPP. While linear models are computationally efficient and easy to interpret, they may not capture complex non-linear relationships between variables. Future work could explore non-linear models or include interaction terms to better capture these relationships.
+It is important to note that the models presented here are linear models, which assume a linear relationship between the predictors and the response variable, GPP. While linear models are computationally efficient and easy to interpret, they may not capture complex non-linear relationships between variables. Future work could explore non-linear models or include interaction terms to better capture these relationships.
 
 <br>
