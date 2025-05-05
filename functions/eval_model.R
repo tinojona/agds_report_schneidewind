@@ -107,7 +107,7 @@ MAE_plot <- function(vec,df_train, df_test){
     data = df_train |> drop_na(),
     method = "knn",
     trControl = caret::trainControl(method = "none"),
-    tuneGrid = data.frame(k = i),
+    tuneGrid = data.frame(k = k_def),
     metric = "RMSE",
     preProcess = NULL
   )
@@ -137,7 +137,7 @@ MAE_plot <- function(vec,df_train, df_test){
     filter(.metric == "mae") |>
     pull(.estimate)
 
-  MAE_df <- rbind(MAE_df, data.frame(k = vec[i], MAE_train = MAE_train, MAE_test = MAE_test))
+  MAE_df <- rbind(MAE_df, data.frame(k = k_def, MAE_train = MAE_train, MAE_test = MAE_test))
 
   }
 
@@ -177,7 +177,7 @@ MAE_table <- function(vec,df_train, df_test){
       data = df_train |> drop_na(),
       method = "knn",
       trControl = caret::trainControl(method = "none"),
-      tuneGrid = data.frame(k = i),
+      tuneGrid = data.frame(k = k_def),
       metric = "RMSE",
       preProcess = NULL
     )
@@ -207,7 +207,7 @@ MAE_table <- function(vec,df_train, df_test){
       filter(.metric == "mae") |>
       pull(.estimate)
 
-    MAE_df <- rbind(MAE_df, data.frame(k = vec[i], MAE_train = MAE_train, MAE_test = MAE_test))
+    MAE_df <- rbind(MAE_df, data.frame(k = k_def, MAE_train = MAE_train, MAE_test = MAE_test))
 
   }
 

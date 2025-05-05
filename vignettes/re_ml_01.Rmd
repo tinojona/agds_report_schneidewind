@@ -183,7 +183,7 @@ With k approaching $N$, in the training data, MAE would increase since we would 
 
 ```{r MAE_plot, warning=FALSE, message=FALSE, fig.align='center', fig.height=3.5, fig.width=6.5}
 # k's to compute MAE for with large k's
-k_vec <- c(1:15,seq(20,100,10), seq(150,300,50), 500, 750, 1200)
+k_vec <- c(1:15,seq(20,100,10), seq(150,300,50))
            
 # MAE plot function
 plot_high = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) +
