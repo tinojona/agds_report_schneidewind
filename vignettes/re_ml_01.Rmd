@@ -176,7 +176,7 @@ Figure 3 shows the temporal variation of observed GPP and the corresponding pred
 
 With k approaching 1, the model will more and more perfectly fit the data, which makes it very sensitive to noise. As a consequence, in the training data, the MAE would decrease and approach 0 while the $R^2$ would increase and approach 1. The opposite would be the case in the test data, where the MAE would increase due to overfitting and the $R^2$ would decrease.
 
-With k approaching $N$, in the training data, MAE would increase since we would be ignoring finer patterns, and the $R^2$ would approach 0 as the model essentially predicts the overall mean at $N$ k's. In the test data, the $R^2$ would stay low due to underfitting and the MAE would slow down to decrease as the model becomes too simplistic.
+With k approaching $N$, in the training data, MAE would increase since we would be ignoring finer patterns, and the $R^2$ would approach 0 as the model essentially predicts the overall mean at $N$ k's. In the test data, the $R^2$ would stay low due to underfitting and the MAE would increase as the model becomes too simplistic.
 
 
 ### 2. Visualization of the implications
@@ -207,24 +207,30 @@ grid.arrange(plot_low, plot_high, ncol = 2, widths = c(3, 7))
 
 <br>
 
-Figure 4 shows the relationship between k and the MAE across a range of values. As hypothesized, when k approaches 1, the MAE decreases toward 0 in the training data, but increases in the test data, indicating overfitting and poor generalizability. As k approaches N, the MAE in the training data increases, but only slightly beyond a certain threshold. Similarly, the MAE in the test data decreases as k increases, but the improvements diminish past that same threshold.
+Figure 4 shows the relationship between k and the MAE across a range of values. As hypothesized, when k approaches 1, the MAE decreases toward 0 in the training data, but increases in the test data, indicating overfitting and poor generalizability. As k approaches N, the MAE in the training data increases, but only slightly beyond a certain threshold. Similarly, the MAE in the test data increases beyond the same threshold as k increases, but only to a small degree with large k jumps.
 
-The initial sharp decrease in test MAE as k increases from 1 reflects a region of overfitting, where small increases in k greatly improve generalizability. The region where increasing k no longer significantly improves test performance indicates underfitting, where the model becomes overly simplistic and fails to capture meaningful patterns in the data.
+The initial sharp decrease in test MAE as k increases from 1 reflects a region of overfitting, where small increases in k greatly improve generalizability. The region where increasing k no longer improves performance on the test set indicates underfitting, where the model becomes overly simplistic and fails to capture meaningful patterns in the data.
 
 ### 3. Determination of the optimal k
 
-An optimal k could be found in the transition between these two regions, where the model achieves a good balance between bias and variance, minimizing test MAE without overfitting. Just taking the lowest MAE on the test set would likely lead to an underfit model being chosen. Visually, this would be approximately 10, as there is an "elbow bend", which indicates a distinct decrease in performance gain with further k addition. This "elbow bend" can also be determined using the Kneedle algorithm, which draws a line between the first and last points on the curve of k versus MAE and then determines the point on the curve, which has the largest perpendicular distance to the line. To determine this optimal k, I use values for k between 1 and 50:
+There are multiple methods for determining the optimal k. The most obvious would be to chose the one with the **lowest MAE score on the test set** as this indicates performance on unseen data. 
 
-```{r kneedle, warning=FALSE}
+```{r k_min, warning=FALSE}
 # k values
 k_vec <- 1:50
 
 # MAE table function
 MAE_df = MAE_table(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test)
 
-# normalize
-x_norm <- rescale(MAE_df$k)
-y_norm <- rescale(MAE_df$MAE_test)
+# return k of minimum MAE on test set
+MAE_df$k[which.min(MAE_df$MAE_test)]
+```
+
+Another method of determining the optimal k is the **"elbow method"**, which indicates a distinct change in the slope of the k-MAE association. Visually this would be approximately located at k=10. Mathematically, this "elbow" can be defined using the **Kneedle algorithm**, which draws a line between the first and last points on the curve of k versus MAE and then determines the point on the curve, which has the largest perpendicular distance to the line. 
+
+```{r kneedle, warning=FALSE}
+# normalize MAE and k
+x_norm <- rescale(MAE_df$k); y_norm <- rescale(MAE_df$MAE_test)
 
 # define endpoints
 point1 <- c(x_norm[1], y_norm[1])
@@ -245,12 +251,46 @@ MAE_df$k[which.max(dist_to_line)]
 ```
 
 
-Another method to determine the optimal value for k is using the rule of thumb: taking the square root of the number of observations in the training data set and dividing them by two:
+Another method to compute the optimal value for k is taking the **square root of the number of observations in the training data set and dividing them by two**, which is more of a rule of thumb::
 
 ```{r sqrtn}
 sqrt(nrow(daily_fluxes_train)) / 2
 ```
 
-However, this methods yields a significantly higher best estimate for k of 34 which in my opinion is quite past the beginning of the plateau where an increase in k decreases MAE only very slightly. Therefore, a better estimate of k was determined visually and using the Kneedle algorithm and is approximately 10, which would agree with my suggestion derived from Figure 1 and 2 that their k of 8 should be increased. Another method to determine an optimal k would be cross-validation, which is not implemented here.
+This methods yields a value very close to the minimum test set MAE score and supports the initial most obvious method choice. In order to ensure that this minimum k of 31 does not depend on the randomly chosen single training and test data sets, **cross-validation** can be implemented. for this, we resample training and test sets multiple (in this case 5) times.
+
+```{r cv, warning=FALSE, message=FALSE}
+# KNN model
+mod_knn <- caret::train(
+  pp, 
+  data = daily_fluxes_train |> drop_na(), 
+  method = "knn",
+  trControl = caret::trainControl(method = "cv", number = 5),
+  tuneGrid = data.frame(k = c(1:70, seq(80, 300, 20))),
+  metric = "MAE"
+)
+
+# return the optimal k based on MAE
+mod_knn$results$k[which.min(mod_knn$results$MAE)]
+
+```
+
+Cross-validation across multiple training and test sets return an optimal k, which is higher than what was returned from the initial training-test set. This indicates that there was a bias in our conclusion based on our choice of sample initially.
+
+```{r cv plot, echo=FALSE,  fig.align='center', fig.width=10, fig.height=3}
+ggplot(mod_knn) +
+    geom_point(color = "skyblue2") +
+    geom_line(color = "skyblue2") +
+    labs(x = "k", y = "MAE (cross-validation)") +
+    theme_minimal()
+
+```
+<center>
+*Figure 5: Relationship between k of the KNN model with cross-validation and the MAE in the test data set.*
+</center>
 
 <br>
+
+
+
+
