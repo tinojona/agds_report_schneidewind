@@ -1,5 +1,5 @@
-# Applied Geodata Science 1 by Tino Schneidewind
-in this repository I work through the course Applied Geodata Science 1 and here I will submit my graded reports.
+# Applied Geo Data Science I by Tino Schneidewind
+in this repository I work through the course Applied Geodata Science I.
 My final reports will be saved in the vignettes folder!
 
 
@@ -8,7 +8,7 @@ My final reports will be saved in the vignettes folder!
 
 ### The functions folder
 
-The `functions` folder contains R functions, not scripts which are stored there so that they can be accessed
+The `functions` folder contains R functions which are stored there so that they can be accessed
 in other documents through realtive paths. 
 
 ### The data-raw folder
@@ -19,20 +19,15 @@ pre-processing to be of use in analysis.
 
 ### The data folder
 
-The `data` folder contains analysis ready data. This is data which you can use,
-as is. This often contains the output of a `data-raw` pre-processing workflow,
-but can also include data which doesn't require any intervention, e.g. a land
-cover map which is used as-is. 
+The `data` folder contains analysis ready data. This often contains the output of a `data-raw` pre-processing workflow,
+but can also include data which doesn't require any intervention. 
 
 ### The analysis folder
 
-The `analysis` folder contains, *surprise*, R scripts covering analysis of your
-analysis ready data (in the `data` folder). These are R scripts with output
-which is limited to numbers, tables and figures. It should not include R
-markdown code!
+The `analysis` folder contains R scripts covering analysis and the tutorial code of the book utilizing data from the `data` folder. 
+These are R scripts with output which is limited to numbers, tables and figures.
 
 ### The vignettes folder
 
-The `vignettes` folder contains dynamic notebooks, i.e. R markdown files. These
-might serve a dual use between analysis and manuscript. 
-Only my final reports will be stored here!
+The `vignettes` folder contains R markdown notebooks. These
+serve a dual use between analysis and manuscript. This folder stores my final reports for this course.
