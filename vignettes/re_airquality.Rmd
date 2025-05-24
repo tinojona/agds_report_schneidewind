@@ -12,7 +12,7 @@ rm(list = ls())
 
 ## Telling a story from data
 
-The objective of this report exercise is to practice visualizing data and using statistical metrics to tell a story from data. For this purpose I investigated the [*airquality*](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality) data set with ozone as the target variable, which is publicly available and consists of daily measurements of environmental variables from May first to September 30th 1973 in New York (Table 1).
+The objective of this report exercise is to practice visualizing data and using statistical metrics to tell a story from data. For this purpose I investigated the [*airquality*](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/airquality) data set with ozone as the target variable, which is publicly available and consists of daily measurements of environmental variables from May first to September 30th 1973 from New York (Table 1).
 
 ```{r data, message=FALSE, warning=FALSE}
 # load libraries
@@ -51,7 +51,7 @@ knitr::kable(table_data,
 <br>
 
 ### 1. Introduction
-Ground level ozone is a threat to human health and leads to higher mortality and hospitalization rates $^1$.  Ozone can form when pollutants from traffic or industry, like nitrous oxide, react with solar radiation $^{2,3}$. Therefore, ozone is highly abundant in populated and polluted urban areas like New York. The degree of the exposure to ozone and their health consequences depend on the ozone concentration, its timely distribution, and the variation of ozone. In order to decrease the potential health effects of dangerous ozone exposure, ozone must be monitored or sufficiently predicted from other more common meteorological variables. In this report exercise, I will investigate the seasonal and weekly patterns of ozone concentrations and determine possible single predictors of ozone concentration like wind speed, solar shortwave radiation, and temperature. I hypothesize that ozone concentrations are higher in the summer due to increased solar radiation and from Monday to Friday due to increased traffic and industry activity. Furthermore, ozone should be best predicted by solar radiation, as it is integral to its formation. 
+Ground level ozone is a threat to human health and leads to higher mortality and hospitalization rates $^1$.  Ozone can form when pollutants from traffic or industry, like nitrous oxide, react with solar radiation $^{2,3}$. Therefore, ozone is highly abundant in populated and polluted urban areas like New York. The degree of the exposure to ozone and their health consequences depend on the ozone concentration, its timely distribution, and the variation of ozone. In order to decrease the potential health effects of dangerous ozone exposure, ozone must be monitored or sufficiently predicted from other more common meteorological variables. In this report exercise, I will investigate the seasonal and weekly patterns of ozone concentrations and determine possible single predictors of the ozone concentration like wind speed, solar shortwave radiation, and temperature. I hypothesize that ozone concentrations are higher in the summer due to increased solar radiation and from Monday to Friday due to increased traffic and industry activity. Furthermore, ozone should be best predicted by solar radiation, as it is integral to its formation. 
 
 <br>
 
@@ -131,12 +131,12 @@ ggplot(airquality, aes(x = date)) +
 
 ```
 <center>
-*Figure 1: Daily ozone concentration in New York in 1973 relative to the WHO threshold of 51 ppb (dashed line).*
+*Figure 1: Time series of daily ozone concentrations in New York in 1973 relative to the WHO threshold of 51 ppb (dashed line).*
 </center>
 
 <br>
 
-Ozone varied greatly from day to day, with ozone concentrations ranging from 1 ppb in May to 168 ppb in August with an average daily concentration of 42 ppb, a median concentration of 32 ppb, and a standard deviation of 33 ppb. Higher average concentrations were observed in the summer months (June-August) with on average 55 ppb which is above the WHO threshold, and lower concentrations in spring (May) with 23 ppb and autumn (September) with 31 ppb (Figure 1). While ozone concentrations were almost exclusively below the WHO threshold of 51 in May and September, they were frequently severely above this threshold from June to August.
+Ozone varied greatly from day to day, with ozone concentrations ranging from 1 ppb on the 21st of May to 168 ppb on the 25th of August with an average daily concentration of 42 ppb, a median concentration of 32 ppb, and a standard deviation of 33 ppb. Higher average concentrations were observed in the summer months (June-August) with on average 55 ppb which is above the WHO threshold, and lower concentrations in spring (May) with 23 ppb and autumn (September) with 31 ppb on average (Figure 1). While ozone concentrations were almost exclusively below the WHO threshold of 51 in May and September, they were frequently severely above this threshold from June to August. Apart from this clear seasonal pattern, no trend over the whole time series was visible.
 
 <br>
 
@@ -145,7 +145,8 @@ ggplot(airquality_dow, aes(x = Month, y = dow, fill = ozone)) +
   geom_tile() +
     scale_fill_gradientn(
     colors = c("gold", "red3"),  # Define the color transition
-    values = scales::rescale(c(0, 85)),
+    values = scales::rescale(c(0, 100)),
+    limits = c(0,100),
     na.value = "white"
   ) +
   theme_minimal() +
@@ -169,13 +170,13 @@ ggplot(airquality_dow, aes(x = Month, y = dow, fill = ozone)) +
 </center>
 
 <br>
-Figure 2 shows that all days of the week exceeding 51 ppb on average were in July and August, with 5 and 6 days, respectively. In July, the highest average concentrations were measured on Wednesday and in August on Saturday. July and August shared no pattern in exceeding 51 ppb of ozone. Taking all other months into account, weekdays and weekends were not consistent in their differences, with May showing higher concentrations during weekdays and June showing higher concentrations over the weekend. Fridays had lower ozone concentrations compared to all other weekdays across all months.
+Figure 2 shows that all days of the week exceeding 51 ppb on average were in July and August, with 5 for both months. In July, the highest average concentrations were measured on Wednesday and in August on Saturday. July and August shared no pattern over the days of the week in exceeding 51 ppb of ozone. Taking all other months into account, weekdays and weekends were not consistent in their differences, with May showing higher concentrations during weekdays and June showing higher concentrations over the weekend. Fridays had consistently one of the lowest ozone concentrations in all months.
 
 <br>
 
 #### 3.2 Prediction of Ozone
  
-From the three single predictors, temperatures linear model performed best at predicting ozone with an $R^2$ of 0.488 which indicates that roughly 50% of the variation of ozone can be modeled with just temperature. The linear models of wind speed and solar radiation performed worse and were only poorly able to predict ozone concentrations (Table 2).
+From the three single predictors, temperatures linear model performed best at predicting ozone with an $R^2$ of 0.488 which indicates that roughly 50% of the variation of ozone can be modeled with just temperature (Table 2). The linear models of wind speed and solar radiation performed worse and were only poorly able to predict ozone concentrations.
 
 <br>
 
@@ -189,7 +190,7 @@ knitr::kable(lm_comparison,
 ```
  
 
-Comparing the linear models visually, the temperature-ozone association indicates a non-linear relationship and shows increasing ozone concentrations with increasing temperature. There is a steep incline in ozone concentration at high temperatures where the model underestimates ozone concentrations (Figure 3). Wind speed as a predictor had an inverse association with ozone, as the highest concentrations occurred in low wind speed conditions. Wind speeds model also had wider confidence intervals than the temperature model, which again indicates poorer predictability. There is no clear visual pattern between ozone and solar radiation, supporting the very poor predictability of ozone shown in Table 2.
+Comparing the linear models visually, the temperature-ozone association indicates a non-linear relationship and shows increasing ozone concentrations with increasing temperature (Figure 3). There is a steep incline in ozone concentration at high temperatures where the model underestimates ozone concentrations. Wind speed as a predictor had an inverse association with ozone, as the highest concentrations occurred in low wind speed conditions. Wind speeds model also had wider confidence intervals than the temperature model, which again indicates poorer predictive ability. There is no clear visual pattern between ozone and solar radiation, supporting the very poor predictability of ozone shown in Table 2.
 
 ```{r lm plot, echo = FALSE, fig.align='center', fig.width=8, fig.height=5}
 
@@ -271,8 +272,7 @@ grid.arrange(plot1, plot2, plot3, plot4, ncol = 4, padding = unit(0, "lines"))
 
 ### 4. Discussion
 
-
-I hypothesized that ozone concentrations should be higher in the summer due to increased solar radiation, and I found a clear seasonal pattern with the highest concentrations in the summer months. However, I did not find the expected increased ozone concentration on weekdays, possibly due to other processes being involved in ozone production and decay than traffic and industry activity. Against expectations, solar radiation predicted ozone worse than wind speed and temperature, possibly because chemical reactions rely more on temperature and wind speed better accounting for a dilution of polluted air. Temperature performed best at predicting ozone concentrations but was not sufficiently accurate to serve as a sole predictor in health monitoring programs. In conclusion, New York's population in 1973 was heavily exposed to dangerous ozone concentrations in the summer months, which often coincided with high temperatures. 
+I hypothesized that ozone concentrations would be higher in the summer due to increased solar radiation, and I found a clear seasonal pattern with the highest concentrations in the summer months. However, I did not find the expected increased ozone concentration on weekdays, possibly due to other processes being involved in ozone production and decay than traffic and industry activity. Against expectations, solar radiation predicted ozone worse than wind speed and temperature, possibly because chemical concentrations rely more on temperature and wind speed, which accounts for a dilution of polluted air. Temperature performed best at linearly predicting ozone concentrations but was not sufficiently accurate to serve as a sole predictor in health monitoring programs. In conclusion, New York's population in 1973 was heavily exposed to dangerous ozone concentrations in the summer months, which often coincided with high temperatures. 
 
 <br>
 

@@ -18,11 +18,12 @@ rm(list = ls())
 
 The objective of this report exercise is to understand and explain the differences between linear regression and K-nearest neighbours models
 
-### 1. Code from [Chapter 10](https://geco-bern.github.io/agds_book/supervised_ml_I.html) from the AGDS1 book
+### 1. Code from [Chapter 10](https://geco-bern.github.io/agds_book/supervised_ml_I.html) from the AGDS I book
 
 ```{r libraries, message=FALSE, warning=FALSE}
 # load libraries
-library(dplyr);library(tidyverse);library(caret);library(recipes);library(yardstick);library(gridExtra);library(scales)
+library(dplyr);library(tidyverse);library(caret);library(recipes)
+library(yardstick);library(gridExtra);library(scales)
 ```
 
 
@@ -165,30 +166,23 @@ grid.arrange(plot_lm, plot_knn, ncol = 1)
 
 <br>
 
-Figure 3 shows the temporal variation of observed GPP and the corresponding predictions from the linear regression and the KNN model. It is hard to compare model performance from this comparison but what is clearly visible is that both model struggle to capture the extremes of very low and very high GPP. This could be explained by the decreased training data on these extremes.
+Figure 3 shows the temporal variation of observed GPP and the corresponding predictions from the linear regression and the KNN model. It is hard to compare model performance from this comparison but what is clearly visible is that both model struggle to capture the extremes of very low and very high GPP. This could be explained by the decreased availability of training data on these extremes.
 
 
 <br>
 
 ## The role of k
 
-### 1. Implications of k approaching 1 and k approaching the number of observations $N$
+### 1. Implications of k approaching 1 and the number of observations $N$
 
 With k approaching 1, the model will more and more perfectly fit the data, which makes it very sensitive to noise. As a consequence, in the training data, the MAE would decrease and approach 0 while the $R^2$ would increase and approach 1. The opposite would be the case in the test data, where the MAE would increase due to overfitting and the $R^2$ would decrease.
 
-With k approaching $N$, in the training data, MAE would increase since we would be ignoring finer patterns, and the $R^2$ would approach 0 as the model essentially predicts the overall mean at $N$ k's. In the test data, the $R^2$ would stay low due to underfitting and the MAE would increase as the model becomes too simplistic.
+With k approaching $N$, in the training data, the MAE would increase since we would be ignoring finer patterns, and the $R^2$ would approach 0 as the model essentially predicts the overall mean at $N$ k's. In the test data, the $R^2$ would stay low due to underfitting and the MAE would increase as the model becomes too simplistic.
 
 
 ### 2. Visualization of the implications
 
 ```{r MAE_plot, warning=FALSE, message=FALSE, fig.align='center', fig.height=3.5, fig.width=6.5}
-# k's to compute MAE for with large k's
-k_vec <- c(1:15,seq(20,100,10), seq(150,300,50))
-           
-# MAE plot function
-plot_high = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) +
-  labs(y = "", x = "k")
-
 # k's to compute MAE for with higher resolution of small k's
 k_vec <- 1:50
            
@@ -196,6 +190,13 @@ k_vec <- 1:50
 plot_low = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) + 
   theme(legend.position = "none") +
   labs(x = "k")
+
+# k's to compute MAE for with large k's
+k_vec <- c(1:15,seq(20,100,10), seq(150,300,50))
+           
+# MAE plot function
+plot_high = MAE_plot(vec = k_vec, df_train = daily_fluxes_train, df_test = daily_fluxes_test) +
+  labs(y = "", x = "k")
 ```
 ```{r MAE_plot2, echo = FALSE, fig.width=10, fig.height=4, fig.align='center'}
 
@@ -251,7 +252,7 @@ MAE_df$k[which.max(dist_to_line)]
 ```
 
 
-Another method to compute the optimal value for k is taking the **square root of the number of observations in the training data set and dividing them by two**, which is more of a rule of thumb::
+Another method to compute the optimal value for k is taking the **square root of the number of observations in the training data set and dividing them by two**, which is more a rule of thumb::
 
 ```{r sqrtn}
 sqrt(nrow(daily_fluxes_train)) / 2
@@ -275,14 +276,15 @@ mod_knn$results$k[which.min(mod_knn$results$MAE)]
 
 ```
 
-Cross-validation across multiple training and test sets return an optimal k, which is higher than what was returned from the initial training-test set. This indicates that there was a bias in our conclusion based on our choice of sample initially.
+
 
 ```{r cv plot, echo=FALSE,  fig.align='center', fig.width=10, fig.height=3}
 ggplot(mod_knn) +
     geom_point(color = "skyblue2") +
     geom_line(color = "skyblue2") +
     labs(x = "k", y = "MAE (cross-validation)") +
-    theme_minimal()
+    theme_minimal() +
+  lims(y = c(1,1.5))
 
 ```
 <center>
@@ -291,6 +293,7 @@ ggplot(mod_knn) +
 
 <br>
 
+Cross-validation across multiple training and test sets return an optimal k, which is higher than what was returned from the initial training-test set (Figure 5). This indicates that there was a bias in our conclusion based on our choice of sample initially. In summary, a combination of the lowest MAE score with cross-validation yields the best estimate of the optimal value for k. Other methods like the elbow methods and Kneedle algorithm are available to provide efficient first guesses. 
 
-
+<br>
 

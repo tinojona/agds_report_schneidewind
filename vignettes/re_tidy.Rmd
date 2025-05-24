@@ -17,7 +17,6 @@ In this report exercise, I will practice Open Science principles by converting a
 The data is taken from *Groenigen, Kees Jan van, Xuan Qi, Craig W. Osenberg, Yiqi Luo, and Bruce A. Hungate. “Faster Decomposition Under Increased Atmospheric CO2 Limits Soil Carbon Storage.” Science 344, no. 6183 (May 2, 2014): 508–9. [https://doi.org/10.1126/science.1249534](https://doi.org/10.1126/science.1249534).* It is saved in the /dataraw folder. Before my investigation I cleaned it manually using the following steps and saved it in the /data folder.
 
 * deleting empty rows,
-* deleting the first 3 rows that were empty,
 * replacing spaces with "_" in column names, 
 * filling the column *Experiments* with corresponding information,
 * converting the column depth to a machine readable numeric value, and
@@ -46,33 +45,33 @@ knitr::kable(data[1:5,1:9],
 ```
 
 ### 1. Introduction
-In the era of climate change, it is vital to understand the effects of increased atmospheric CO2 concentrations have on ecosystems. Soil stores carbon in the form of organic and inorganic matter. Organic soil matter is cut-up dead biomass primarily contributed by plants. The growth of plants is regulated by their photosynthesis rate which can be limited or enhanced by the abundance of atmospheric CO2. 
+In the era of climate change, it is vital to understand the effects that increased atmospheric CO2 concentrations have on ecosystems. Soil stores carbon in the form of organic and inorganic matter. Organic soil matter is cut-up dead biomass primarily contributed by plants. The growth of plants is regulated by their photosynthesis rate which can be limited or enhanced by the abundance of atmospheric CO2. 
 
 In this report I will investigate whether increased atmospheric CO2 concentrations lead to an increasing storage of carbon in soil. I hypothesize that (i) higher CO2 concentrations lead to a short term increase in soil carbon storage and (ii) that soil carbon will eventually reach an equilibrium at those higher concentrations and not rise further.  
 
 <br>
 
 ### 2. Methods
-I analyzed the effect of atmospheric CO2 concentrations on soil carbon concentrations by summarizing multiple studies which compared soil samples which were divided into samples from an environment with ambient CO2 concentrations and with increased CO2 concentrations.
+I analyzed the effect of atmospheric CO2 concentrations on soil carbon concentrations by summarizing multiple studies, which compared soil samples, which were divided into samples from an environment with ambient CO2 concentrations and increased CO2 concentrations.
 
-The data was provided by *Groenigen et al. (2014)* who collected existing literature on the responses of elevated CO2 concentrations on soil organic matter. I identified whether there is an effect of this treatment using the log-response ratio comparing ambient CO2 and elevated CO2 soil organic matter across all experiments. However, I distinguished between different time phases after the start of the experiment as these could indicate a timely development of the response to the elevated CO2 concentrations. The phases are:
+The data was provided by *Groenigen et al. (2014)* who collected existing literature on the responses of elevated CO2 concentrations on soil organic matter. I identified whether there is an effect of this treatment using the log-response ratio comparing ambient CO2 and elevated CO2 soil organic matter samples across all experiments. However, I distinguished between different time phases after the start of the experiment as these could indicate a timely development of the response to the elevated CO2 concentrations. The phases are:
 
 * early: start of the experiment and up to 3 years
 * mid: between 3 and 6 years after the start of the experiment
 * late: more than 6 years since the start of the experiment
 
-The formula used for calculating the log-response ratio RR is the following with $x$ indicating the concentration of soil organic carbon in the two scenarios:
+First, I determined the log-response ratio for each observation of every study individually. The formula used for calculating the log-response ratio RR is the following with $x$ indicating the concentration of soil organic carbon in the two scenarios:
 $$RR = ln( \frac{x_{elevated}}{x_{ambient}} )$$
 
 
-I aggregated the log-response ratios across all experiments using the following steps:
+Next, I aggregated the log-response ratios across all experiments with respect to the 3 previously defined phases using the following steps:
 
 1. Calculate the averages of ambient and increased CO2 soil carbon concentrations for every experiment and every phase,
 2. calculate the log-response ratios of all existing experiment-phase pairs, and
-3. then average over all values of corresponding to the same phase.
+3. then average over all values corresponding to the same phase.
  
  
-The averaging of the log-response ratios had to be adjusted, because not all experiments had measured over enough time to represent all of our phases or were missing data. Consequently, we had to exclude all response ratios from the averaging process that were either not a number (NaN) and exactly 0 because one or both of the division partners were missing. A response ratio of 0 could also mean that there is exactly no effect of the increased CO2 concentrations. However, having precisely no difference at all is highly unlikely and could also result out of measurement errors.
+The aggregation of the log-response ratios had to be adjusted, because not all experiments had measured over enough time to represent all of our phases or were missing data. Consequently, we had to exclude all response ratios from the averaging process that were either not a number (NaN) and exactly 0 because one or both of the division partners were missing. A response ratio of 0 could also mean that there is exactly no effect of the increased CO2 concentrations. However, having precisely no difference at all is highly unlikely and could also result out of measurement errors.
 <br>
 
 ```{r RR}
@@ -105,7 +104,7 @@ data_aggregated <- data |>
 data_RR_means <- data_aggregated |>
   
   summarize(
-    ean_RR_early = mean(RR_early[!is.nan(RR_early) & RR_early != 0], na.rm = T),         # early
+    mean_RR_early = mean(RR_early[!is.nan(RR_early) & RR_early != 0], na.rm = T),         # early
     mean_RR_mid   = mean(RR_mid[!is.nan(RR_mid) & RR_early != 0], na.rm = T),            # mid
     mean_RR_late  = mean(RR_late[!is.nan(RR_late) & RR_early != 0], na.rm = T)           # late
   )
@@ -159,6 +158,6 @@ knitr::kable(data_RR_means,
 <br>
 
 ### 4. Discussion
-I hypothesized that elevated CO2 concentrations could lead to a short term increase in soil carbon storage, which would reach an equilibrium with higher concentrations in the elevated CO2 scenario. I did find soil carbon to increase at first due to the increased abundance of atmospheric CO2, however, after some time the soil carbon decreased again below levels of the ambient CO2 scenario. Interestingly, the soil stores less carbon with higher atmospheric carbon availability after some time passing. The authors of *Groenigen et al. (2014)* argue that this could be due to an increase in the microbial activity that decomposes soil organic carbon, which I did not take into account while formulating my hypotheses. These microbes respirate soil organic carbon faster than it is produced in elevated CO2 conditions, leading to an equilibrium below the levels of the ambient scenario after a first spike of soil carbon concentrations. The global increase in temperature could even further exacerbate this shift to a decrease of soil organic carbon storage. This could have dire consequences as soils would not act as a carbon sink that is able to keep up with rising CO2 concentrations, according to my results.
+I hypothesized that elevated CO2 concentrations could lead to a short term increase in soil carbon storage, which would reach an equilibrium with higher concentrations in the elevated CO2 scenario. I did find soil carbon to increase at first due to the increased abundance of atmospheric CO2, however, after some time the soil carbon decreased again below levels of the ambient CO2 scenario. Interestingly, the soil stores less carbon with higher atmospheric carbon availability after some time passing. The authors of *Groenigen et al. (2014)* argue that this could be due to an increase in the microbial activity that decomposes soil organic carbon, which I did not take into account while formulating my hypotheses. These microbes respirate soil organic carbon faster than it is produced in elevated CO2 conditions, leading to an equilibrium below the levels of the ambient scenario after a first spike of soil carbon concentrations. The global increase in temperature could even further exacerbate this shift to a decrease of soil organic carbon storage as microbial activity increases. This could have dire consequences as soils would not act as a carbon sink that is able to keep up with rising CO2 concentrations, according to my results.
 
 <br>

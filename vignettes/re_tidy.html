@@ -11,7 +11,7 @@
 
 <meta name="author" content="Tino Schneidewind" />
 
-<meta name="date" content="2025-04-25" />
+<meta name="date" content="2025-05-24" />
 
 <title>Session 4 Data wrangling - Report Exerise</title>
 
@@ -577,7 +577,7 @@ display: none;
 <h1 class="title toc-ignore">Session 4 Data wrangling - Report
 Exerise</h1>
 <h4 class="author">Tino Schneidewind</h4>
-<h4 class="date">2025-04-25</h4>
+<h4 class="date">2025-05-24</h4>
 
 </div>
 
@@ -598,7 +598,6 @@ It is saved in the /dataraw folder. Before my investigation I cleaned it
 manually using the following steps and saved it in the /data folder.</p>
 <ul>
 <li>deleting empty rows,</li>
-<li>deleting the first 3 rows that were empty,</li>
 <li>replacing spaces with “_” in column names,</li>
 <li>filling the column <em>Experiments</em> with corresponding
 information,</li>
@@ -804,7 +803,7 @@ Trueman and Gonzalez-Meler 2005
 <div id="introduction" class="section level3">
 <h3>1. Introduction</h3>
 <p>In the era of climate change, it is vital to understand the effects
-of increased atmospheric CO2 concentrations have on ecosystems. Soil
+that increased atmospheric CO2 concentrations have on ecosystems. Soil
 stores carbon in the form of organic and inorganic matter. Organic soil
 matter is cut-up dead biomass primarily contributed by plants. The
 growth of plants is regulated by their photosynthesis rate which can be
@@ -820,14 +819,14 @@ rise further.</p>
 <div id="methods" class="section level3">
 <h3>2. Methods</h3>
 <p>I analyzed the effect of atmospheric CO2 concentrations on soil
-carbon concentrations by summarizing multiple studies which compared
-soil samples which were divided into samples from an environment with
-ambient CO2 concentrations and with increased CO2 concentrations.</p>
+carbon concentrations by summarizing multiple studies, which compared
+soil samples, which were divided into samples from an environment with
+ambient CO2 concentrations and increased CO2 concentrations.</p>
 <p>The data was provided by <em>Groenigen et al. (2014)</em> who
 collected existing literature on the responses of elevated CO2
 concentrations on soil organic matter. I identified whether there is an
 effect of this treatment using the log-response ratio comparing ambient
-CO2 and elevated CO2 soil organic matter across all experiments.
+CO2 and elevated CO2 soil organic matter samples across all experiments.
 However, I distinguished between different time phases after the start
 of the experiment as these could indicate a timely development of the
 response to the elevated CO2 concentrations. The phases are:</p>
@@ -836,29 +835,30 @@ response to the elevated CO2 concentrations. The phases are:</p>
 <li>mid: between 3 and 6 years after the start of the experiment</li>
 <li>late: more than 6 years since the start of the experiment</li>
 </ul>
-<p>The formula used for calculating the log-response ratio RR is the
-following with <span class="math inline">\(x\)</span> indicating the
-concentration of soil organic carbon in the two scenarios: <span class="math display">\[RR = ln( \frac{x_{elevated}}{x_{ambient}}
-)\]</span></p>
-<p>I aggregated the log-response ratios across all experiments using the
-following steps:</p>
+<p>First, I determined the log-response ratio for each observation of
+every study individually. The formula used for calculating the
+log-response ratio RR is the following with <span class="math inline">\(x\)</span> indicating the concentration of soil
+organic carbon in the two scenarios: <span class="math display">\[RR =
+ln( \frac{x_{elevated}}{x_{ambient}} )\]</span></p>
+<p>Next, I aggregated the log-response ratios across all experiments
+with respect to the 3 previously defined phases using the following
+steps:</p>
 <ol style="list-style-type: decimal">
 <li>Calculate the averages of ambient and increased CO2 soil carbon
 concentrations for every experiment and every phase,</li>
 <li>calculate the log-response ratios of all existing experiment-phase
 pairs, and</li>
-<li>then average over all values of corresponding to the same
-phase.</li>
+<li>then average over all values corresponding to the same phase.</li>
 </ol>
-<p>The averaging of the log-response ratios had to be adjusted, because
-not all experiments had measured over enough time to represent all of
-our phases or were missing data. Consequently, we had to exclude all
-response ratios from the averaging process that were either not a number
-(NaN) and exactly 0 because one or both of the division partners were
-missing. A response ratio of 0 could also mean that there is exactly no
-effect of the increased CO2 concentrations. However, having precisely no
-difference at all is highly unlikely and could also result out of
-measurement errors. <br></p>
+<p>The aggregation of the log-response ratios had to be adjusted,
+because not all experiments had measured over enough time to represent
+all of our phases or were missing data. Consequently, we had to exclude
+all response ratios from the averaging process that were either not a
+number (NaN) and exactly 0 because one or both of the division partners
+were missing. A response ratio of 0 could also mean that there is
+exactly no effect of the increased CO2 concentrations. However, having
+precisely no difference at all is highly unlikely and could also result
+out of measurement errors. <br></p>
 <pre class="r"><code>#  aggregate across experiments and phases
 data_aggregated &lt;- data |&gt; 
   
@@ -888,7 +888,7 @@ data_aggregated &lt;- data |&gt;
 data_RR_means &lt;- data_aggregated |&gt;
   
   summarize(
-    ean_RR_early = mean(RR_early[!is.nan(RR_early) &amp; RR_early != 0], na.rm = T),         # early
+    mean_RR_early = mean(RR_early[!is.nan(RR_early) &amp; RR_early != 0], na.rm = T),         # early
     mean_RR_mid   = mean(RR_mid[!is.nan(RR_mid) &amp; RR_early != 0], na.rm = T),            # mid
     mean_RR_late  = mean(RR_late[!is.nan(RR_late) &amp; RR_early != 0], na.rm = T)           # late
   )</code></pre>
@@ -1196,9 +1196,9 @@ faster than it is produced in elevated CO2 conditions, leading to an
 equilibrium below the levels of the ambient scenario after a first spike
 of soil carbon concentrations. The global increase in temperature could
 even further exacerbate this shift to a decrease of soil organic carbon
-storage. This could have dire consequences as soils would not act as a
-carbon sink that is able to keep up with rising CO2 concentrations,
-according to my results.</p>
+storage as microbial activity increases. This could have dire
+consequences as soils would not act as a carbon sink that is able to
+keep up with rising CO2 concentrations, according to my results.</p>
 <p><br></p>
 </div>
 </div>

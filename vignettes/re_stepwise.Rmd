@@ -29,33 +29,36 @@ set.seed(1111999)
 ```
 
 ```{r tablevariables, echo=FALSE}
-table_variables <- data.frame(Variable    = c("Name", "Class"), 
-                              siteid      = c("Identification of site", "factor"),
-                              TA_F        = c("Air temperature", "numeric"),
-                              TA_F_MDS    = c("Air temperature (gap filled)", "numeric"),
-                              SW_IN_F     = c("Incoming shortwave radiation", "numeric"),
-                              SW_IN_F_MDS = c("Incoming shortwave radiation (gap filled)", "numeric"),
-                              LW_IN_F     = c("Incoming lingwave radiation", "numeric"),
-                              LW_IN_F_MDS = c("Incoming lingwave radiation (gap filled)", "numeric"),
-                              VPD_F       = c("Vapor pressure deficit", "numeric"),
-                              VPD_F_MDS   = c("Vapor pressure deficit (gap filled)", "numeric"),
-                              PA_F        = c("Atmospheric pressure", "numeric"),
-                              P_F         = c("Precipitation", "numeric"),
-                              WS_F        = c("Wind speed", "numeric"),
-                              CO2_F_MDS   = c("CO2 mole fraction (gap filled)", "numeric"),
-                              PPFD_IN     = c("Photosynthetic photon flux density", "numeric"),
-                              USTAR       = c("Friction velocity", "numeric")
-                              )
+table_variables <- data.frame(
+  Variable    = c("Name", "Class", "unit"), 
+  GPP_NT_VUT_REF = c("Gross Primary Production", "numeric", "μmol CO2 /m\u00B2 s"),
+  siteid      = c("Identification of site", "factor", "unitless"),
+  TA_F        = c("Air temperature", "numeric", "°C"),
+  TA_F_MDS    = c("Air temperature (gap filled)", "numeric", "°C"),
+  SW_IN_F     = c("Incoming shortwave radiation", "numeric", "W/m\u00B2"),
+  SW_IN_F_MDS = c("Incoming shortwave radiation (gap filled)", "numeric", "W/m\u00B2"),
+  LW_IN_F     = c("Incoming longwave radiation", "numeric", "W/m\u00B2"),
+  LW_IN_F_MDS = c("Incoming longwave radiation (gap filled)", "numeric", "W/m\u00B2"),
+  VPD_F       = c("Vapor pressure deficit", "numeric", "hPa"),
+  VPD_F_MDS   = c("Vapor pressure deficit (gap filled)", "numeric", "hPa"),
+  PA_F        = c("Atmospheric pressure", "numeric", "kPa"),
+  P_F         = c("Precipitation", "numeric", "mm"),
+  WS_F        = c("Wind speed", "numeric", "m/s"),
+  CO2_F_MDS   = c("CO2 mole fraction (gap filled)", "numeric", "unitless"),
+  PPFD_IN     = c("Photosynthetic photon flux density", "numeric", "μmol Photon/m\u00B2 s"),
+  USTAR       = c("Friction velocity", "numeric", "unitless"),
+  stringsAsFactors = FALSE
+) 
 
 
 table_variables <- t(table_variables)
 
 
-colnames(table_variables) <- c("Description", "Class")
+colnames(table_variables) <- c("Description", "Class", "Unit")
 
 # Now, use kable to display the table with the proper column names
 table_variables[2:nrow(table_variables), ] |>
-  kable(caption = "Table 1: Predictor variables", col.names = c("Variable", "Description", "Class")) |>
+  kable(caption = "Table 1: Variables", col.names = c("Variable", "Description", "Class")) |>
   kable_styling(full_width = FALSE, position = "center")|>
   scroll_box(width = "100%")
 ```
@@ -77,17 +80,19 @@ For both objectives, I will use the $R^2$ and Akaiken information criterion (AIC
 <br>
 
 ### 2. Methods
+To investigate which single variables predicts GPP best, I fit linear models for each bivariate combination with GPP as the outcome and compare their $R^2$ and AIC scores.
+
 To assess how GPP can be best modeled using a combination of all possible predictors I performed a stepwise forward regression, as this is a very computationally efficient, following these steps:
 
 1. Set the number of predictors to $p = 1$.
 2. Fit all regression models with $p$ predictor(s) and compute their $R^2$.
-3. Select the model with $p$ predictor(s) that achieves the highest $R^2$ (best fitting model) and compute its Akaiken information criterion score (AIC).
+3. Select the model with $p$ predictor(s) that achieves the highest $R^2$ (best fitting model) and compute its AIC.
 4. Fit all regression models with $p + 1$  predictors that includes the predictor(s) selected at the previous step and compute their $R^2$. Select the best fitting model and compute its AIC.
 5. If the AIC of the model with $p + 1$ predictors is poorer than the AIC of the model with $p$ predictor(s), retain the model with $p$ predictor(s) and quit. Otherwise, continue with with step 4.
 
 In this stepwise forward regression, I accounted for all the variables displayed in Table 1.
 
-Using the following function, I calculated the ability of the linear models to predict GPP ability ($R^2$, adjusted $R^2$, AIC).
+Using the following function, I calculated the capacity of the linear models to predict GPP, using $R^2$, adjusted $R^2$, and AIC.
 
 ```{r exerc1, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
 # function to extract model performance
@@ -111,7 +116,7 @@ For research question 1, I determined the predictive performance of GGP of all v
 
 ```{r exerc1_2, warning=FALSE, message=FALSE, fig.height= 22, fig.width= 10, fig.align='center'}
 # predictor names for bivariate analysis
-vars      <- colnames(half_hourly_fluxes[c(1:14,16)])
+vars      <- colnames(half_hourly_fluxes |> select(-starts_with("GPP")))
 
 # apply function
 results_1 <- map_dfr(vars, fit_model) |> arrange(desc(R2))
@@ -144,13 +149,20 @@ while(min(stepwise$AIC) == stepwise$AIC[nrow(stepwise)]){
 }
 ```
 
+After running this loop, I delete the first row, which has no predictors and the last row, which performed worse than the previous row.
 
-```{r stepwise_cleaning, message=FALSE, warning=FALSE, echo=FALSE}
+```{r stepwise_cleaning, message=FALSE, warning=FALSE}
 # clean up the dataframe
 stepwise <- stepwise |>
-  slice(2:(n() - 1)) |>                                           # remove first (empty) and last (not best) performing model
-  mutate(predictor = substr(predictor, 5, nchar(predictor))) |>   # remove " + " at the start of predictors
-  mutate(index = seq_along(predictor)) |>
+  
+  # remove first (empty) and last (not best) performing model
+  slice(2:(n() - 1)) |> 
+  
+  # remove " + " at the start of predictors
+  mutate(predictor = substr(predictor, 5, nchar(predictor)),
+         index = seq_along(predictor)) |>
+  
+  # reorder the data frame
   select(index, everything())
 ```
 
@@ -160,7 +172,7 @@ stepwise <- stepwise |>
 
 #### 3.1. Single linear predictors
 
-From all single linear predictors, photosynthetic photon flux density (PPFD_IN) was the most effective in predicting GPP, with an $R^2$ of 0.363 which indicates a moderate but limited capacity to predict GPP with 63.7% of the variance of GPP remaining unexplained (Table 2). Second and third best in predicting GPP were  incoming shortwave radiation (SW_IN_F and SW_IN_F_MDS) and air temperature (TA_F and TA_F_MDS) with the gap-filled variables being able to better predict GPP than their non-gap-filled counterparts. Apart from these top 5 predicting variables, all other variables had very low $R^2$ values that indicate very poor predictability of GPP based on these variables individually.  
+From all single linear predictors, photosynthetic photon flux density (PPFD_IN) was the most effective in predicting GPP, with an $R^2$ of 0.363, which indicates a moderate but limited capacity to predict GPP with 63.7% of the variance of GPP remaining unexplained (Table 2). Second and third best in predicting GPP were  incoming shortwave radiation (SW_IN_F and SW_IN_F_MDS) and air temperature (TA_F and TA_F_MDS) with the gap-filled variables being able to better predict GPP than their non-gap-filled counterparts. Apart from these top 5 predicting variables, all other variables had very low $R^2$ values that indicate very poor predictability of GPP based on these variables individually.  
 
 ```{r results1, warning=FALSE, message=FALSE, echo=FALSE}
 # present table
@@ -169,7 +181,7 @@ results_1 |>
   mutate(index = seq_along(predictor)) |>
   select(index, everything()) |>
   kable(caption = "Table 2: Model Performance Metrics", 
-        digits = 3, col.names = c("Index", "Predictor", "R2","AIC"), align = rep("l", 4)) |>
+        digits = 3, col.names = c("Index", "Predictor", "R\u00B2","AIC"), align = rep("l", 4)) |>
   kable_styling(full_width = FALSE, position = "center")|>
   scroll_box(width = "100%")
 ```
@@ -178,11 +190,13 @@ results_1 |>
 ```{r results1plots, warning=FALSE, message=FALSE, fig.height= 7, fig.width= 12, fig.align='center', echo=FALSE}
 # save plots in order of performance
 vars_ordered      <- results_1$predictor
-plots_1   <- map2(vars_ordered, seq_along(vars_ordered), ~ {
-  
-  # is the variable is numeric before applying min()?
-  x_vals  <- half_hourly_fluxes[[.x]]
-  x_min   <- if (is.numeric(x_vals)) min(x_vals, na.rm = TRUE) else levels(x_vals)[1]
+
+plots_1 <- map2(vars_ordered, seq_along(vars_ordered), ~ {
+
+  x_vals <- half_hourly_fluxes[[.x]]
+
+  x_max <- if (is.numeric(x_vals)) max(x_vals, na.rm = TRUE) else tail(levels(x_vals), 1)
+  y_min <- min(half_hourly_fluxes$GPP_NT_VUT_REF, na.rm = TRUE)
 
   ggplot(half_hourly_fluxes, aes(x = !!sym(.x), y = GPP_NT_VUT_REF)) +
     geom_point(alpha = 0.4) +
@@ -190,17 +204,16 @@ plots_1   <- map2(vars_ordered, seq_along(vars_ordered), ~ {
     labs(x = .x, y = "GPP") +
     theme_classic() +
     annotate("text", 
-             x = x_min, 
-             y = max(half_hourly_fluxes$GPP_NT_VUT_REF, na.rm = TRUE), 
+             x = x_max, 
+             y = y_min, 
              label = .y, 
-             hjust = -0.5, vjust = 1.5, size = 5, fontface = "bold")
+             hjust = 1.2, vjust = -1, size = 5, fontface = "bold")
 })
-
 # display plots
 grid.arrange(grobs = plots_1, ncol = 5, nrow = 3)
 ```
 <center>
-*Figure 1: Scatterplots of all predictors and GPP and their linear association. *1*: PPFD_IN, *2*: SW_IN_MDS, *3*: SW_IN_F, *4*: TA_F_MDS,*5*: TA_F, *6*: VPD_F, *7*: LW_IN_F_MDS, *8*: LW_IN_F, *9*: VPD_F_MDS, *10*: siteid, *11*: CCO2_F_MDS, *12*: WS_F, *13*: P_F, *14*: PA_F, *15*: USTAR.*
+*Figure 1: Scatterplots of all predictors and GPP and their linear association. *1*: PPFD_IN*; 2*: SW_IN_MDS*; 3*: SW_IN_F*; 4*: TA_F_MDS*; 5*: TA_F*; 6*: VPD_F*; 7*: LW_IN_F_MDS*; 8*: LW_IN_F*; 9*: VPD_F_MDS*; 10*: siteid*; 11*: CCO2_F_MDS*; 12*: WS_F*; 13*: P_F*; 14*: PA_F*; 15*: USTAR.*
 </center>
 
 <br>
@@ -216,14 +229,14 @@ Figure 1 displays scatterplots of all single predictors of GPP. A clear positive
 ggplot(aes(x=index, y= R2adj), data = stepwise) +
   geom_point() +
   labs(x = "Number of predictors",
-       y = "adjusted R2") +
-  ylim(0,1) +
+       y = "adjusted R\u00B2") +
+  ylim(0.25,0.75) +
   scale_x_continuous(breaks = seq(1, 12, by = 2)) +
   theme_minimal()
 
 ```
 <center>
-*Figure 2: Adjusted R2 scores for the best performing model with a defined number of predictors from the stepwise regression.*
+*Figure 2: Adjusted $R^2$ scores for the best performing model with a defined number of predictors from the stepwise regression.*
 </center>
 
 <br>
