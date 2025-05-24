@@ -35,6 +35,9 @@ These are R scripts and RMarkdowns.
 The `vignettes` folder contains R markdown notebooks. These
 serve a dual use between analysis and manuscript. This folder stores my final reports for this course.
 
+<br>
+
 Part of my final submission are the following repositories of the report exercise of Session 8 - Code Management.
-The repository I forked from Michael: [https://github.com/tinojona/agds_ch_8_MichaelW](https://github.com/tinojona/agds_ch_8_MichaelW) 
-My repository that Micheal forked: [https://github.com/tinojona/adgs_2_code_management](https://github.com/tinojona/adgs_2_code_management)
+
+- The repository I forked from Michael: [https://github.com/tinojona/agds_ch_8_MichaelW](https://github.com/tinojona/agds_ch_8_MichaelW) 
+- My repository that Micheal forked: [https://github.com/tinojona/adgs_2_code_management](https://github.com/tinojona/adgs_2_code_management)
